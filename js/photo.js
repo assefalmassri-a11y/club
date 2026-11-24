@@ -27,13 +27,26 @@ export async function uploadPhoto(clubId, memberId, file) {
   return path;
 }
 
+// Equipment photo: resized JPEG at <club>/<equipment_id>.jpg, then registered through the RPC.
+export async function uploadEquipmentPhoto(clubId, equipmentId, file) {
+  const blob = await toJpeg(file);
+  const path = `${clubId}/${equipmentId}.jpg`;
+  const { error } = await sb.storage.from('equipment-photos').upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+  if (error) throw error;
+  const { error: e2 } = await sb.rpc('set_equipment_photo', { p_id: equipmentId, p_path: path });
+  if (e2) throw e2;
+  cache.delete('equipment-photos|' + path);
+  return path;
+}
+
 const cache = new Map();
-export async function photoUrl(path) {
-  const hit = cache.get(path);
+export async function photoUrl(path, bucket = 'member-photos') {
+  const key = bucket + '|' + path;
+  const hit = cache.get(key);
   if (hit && hit.exp > Date.now()) return hit.url;
-  const { data, error } = await sb.storage.from('member-photos').createSignedUrl(path, 600);
+  const { data, error } = await sb.storage.from(bucket).createSignedUrl(path, 600);
   if (error || !data) return null;
-  cache.set(path, { url: data.signedUrl, exp: Date.now() + 540000 });
+  cache.set(key, { url: data.signedUrl, exp: Date.now() + 540000 });
   return data.signedUrl;
 }
 
@@ -52,4 +65,11 @@ export function pickPhoto() {
     i.addEventListener('cancel', () => resolve(null));
     i.click();
   });
+}
+
+// Square thumbnail for equipment (placeholder icon text when no photo).
+export function thumb(path, bucket = 'equipment-photos') {
+  const box = h('span', { class: 'thumb' }, '▣');
+  if (path) photoUrl(path, bucket).then((u) => { if (u) { const im = h('img', { alt: '', loading: 'lazy' }); im.src = u; box.textContent = ''; box.append(im); } }).catch(() => {});
+  return box;
 }

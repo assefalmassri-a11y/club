@@ -80,3 +80,8 @@ Plan type "Calendar month": membership ends on the last day of the month; the fi
 
 ## Phase 16
 Analytics (staff), coupons, installments, shop/POS, equipment register, personal-training booking (trainer availability + member booking), class ratings, achievements + opt-in leaderboard, monthly reports (cron `monthly-reports`, daily 06:30 UTC, acts on day 1 per club timezone). Waitlist for classes already existed (`register_for_event` / `promote_waitlist`).
+
+## Phase 17
+- Design overhaul: accent colors per section, grouped sidebar, desktop layout (wide grids), mobile bottom bar + bottom-sheet modals, light/dark/auto theme (`js/theme.js`).
+- Per-trainer report for the owner (staff → "Report"): classes, attendance, fill rate, rating, PT sessions, clients, salary; CSV export.
+- Equipment photo (private bucket `equipment-photos`, path `<club>/<id>.jpg`).

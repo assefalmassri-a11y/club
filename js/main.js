@@ -4,6 +4,7 @@ import { installErrorLog } from './errlog.js';
 import { state, canManage, isFrontDesk } from './state.js';
 import { h, clear, spinner, toast, errText, openForm } from './dom.js';
 import { t, initLang } from './i18n.js';
+import { initTheme } from './theme.js';
 import { icon } from './icons.js';
 
 import * as overview from './views/overview.js';
@@ -26,26 +27,27 @@ import * as audit from './views/audit.js';
 
 const root = document.getElementById('app');
 initLang();
+initTheme();
 installErrorLog('staff');
 
 const TABS = [
-  { id: 'overview', view: overview, roles: ['owner', 'branch_manager', 'staff'] },
-  { id: 'reception', view: reception, roles: ['owner', 'branch_manager', 'staff'] },
-  { id: 'members', view: members, roles: ['owner', 'branch_manager', 'staff'] },
-  { id: 'invoices', view: invoices, roles: ['owner', 'branch_manager', 'staff'] },
-  { id: 'ledger', view: ledger, roles: ['owner', 'branch_manager'] },
-  { id: 'reports', view: reports, roles: ['owner', 'branch_manager'] },
-  { id: 'coach', view: coach, roles: ['trainer'] },
-  { id: 'clients', view: clients, roles: ['owner', 'branch_manager'] },
-  { id: 'events', view: events, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },
-  { id: 'analytics', view: analytics, roles: ['owner', 'branch_manager'] },
-  { id: 'shop', view: shop, roles: ['owner', 'branch_manager', 'staff'] },
-  { id: 'equipment', view: equipment, roles: ['owner', 'branch_manager', 'staff'] },
-  { id: 'doors', view: doors, roles: ['owner', 'branch_manager'] },
-  { id: 'staff', view: staff, roles: ['owner', 'branch_manager'] },
-  { id: 'chat', view: chat, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },
-  { id: 'audit', view: audit, roles: ['owner'] },
-  { id: 'settings', view: settings, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },
+  { id: 'overview', g: 'main', view: overview, roles: ['owner', 'branch_manager', 'staff'] },
+  { id: 'coach', g: 'main', view: coach, roles: ['trainer'] },
+  { id: 'reception', g: 'main', view: reception, roles: ['owner', 'branch_manager', 'staff'] },
+  { id: 'members', g: 'people', view: members, roles: ['owner', 'branch_manager', 'staff'] },
+  { id: 'invoices', g: 'people', view: invoices, roles: ['owner', 'branch_manager', 'staff'] },
+  { id: 'clients', g: 'people', view: clients, roles: ['owner', 'branch_manager'] },
+  { id: 'events', g: 'people', view: events, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },
+  { id: 'chat', g: 'people', view: chat, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },
+  { id: 'shop', g: 'biz', view: shop, roles: ['owner', 'branch_manager', 'staff'] },
+  { id: 'equipment', g: 'biz', view: equipment, roles: ['owner', 'branch_manager', 'staff'] },
+  { id: 'ledger', g: 'biz', view: ledger, roles: ['owner', 'branch_manager'] },
+  { id: 'reports', g: 'biz', view: reports, roles: ['owner', 'branch_manager'] },
+  { id: 'analytics', g: 'biz', view: analytics, roles: ['owner', 'branch_manager'] },
+  { id: 'doors', g: 'sys', view: doors, roles: ['owner', 'branch_manager'] },
+  { id: 'staff', g: 'sys', view: staff, roles: ['owner', 'branch_manager'] },
+  { id: 'audit', g: 'sys', view: audit, roles: ['owner'] },
+  { id: 'settings', g: 'sys', view: settings, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },
 ];
 
 let currentTab = null;
@@ -144,7 +146,7 @@ function renderShell() {
 
   const vis = visibleTabs();
   const MAIN = 4; // on phones: 4 primary tabs + a "More" sheet
-  const navButtons = vis.map((tb, i) => h('button', { type: 'button', 'data-tab': tb.id, class: i >= MAIN && vis.length > MAIN + 1 ? 'more-item' : '', onClick: () => show(tb.id) }, icon(tb.id, 20), h('span', null, t(`tab.${tb.id}`))));
+  const navButtons = vis.flatMap((tb, i) => [i === 0 || vis[i - 1].g !== tb.g ? h('div', { class: 'nav-group' }, t(`grp.${tb.g}`)) : null, h('button', { type: 'button', 'data-tab': tb.id, class: i >= MAIN && vis.length > MAIN + 1 ? 'more-item' : '', onClick: () => show(tb.id) }, icon(tb.id, 20), h('span', null, t(`tab.${tb.id}`)))]);
   const moreBtn = h('button', { type: 'button', class: 'more-btn', 'data-more': '1', onClick: () => openMore() }, icon('more', 20), h('span', null, t('tab.more')));
   function openMore() {
     const overlay = h('div', { class: 'overlay' });

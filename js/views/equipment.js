@@ -3,6 +3,7 @@ import { sb } from '../supa.js';
 import { state, scoped, canManage } from '../state.js';
 import { h, clear, badge, button, openForm, toast, guard, fmtDate, fmtDateTime, today } from '../dom.js';
 import { t } from '../i18n.js';
+import { uploadEquipmentPhoto, pickPhoto, thumb } from '../photo.js';
 
 const KIND = { ok: 'ok', needs_service: 'warn', out_of_order: 'bad' };
 
@@ -47,19 +48,20 @@ export async function render(box) {
 
   async function load() {
     clear(list);
-    const { data, error } = await scoped(sb.from('equipment').select('id, branch_id, name, status, last_service, next_service, note').order('name').limit(300));
+    const { data, error } = await scoped(sb.from('equipment').select('id, branch_id, name, status, last_service, next_service, note, photo_path').order('name').limit(300));
     if (error) throw error;
     const rows = data || [];
     if (!rows.length) { list.append(h('p', { class: 'muted' }, t('common.empty'))); return; }
     list.append(h('table', { class: 'grid' },
       h('thead', null, h('tr', null, [t('eq.name'), t('common.status'), t('eq.next'), t('common.actions')].map((c) => h('th', null, c)))),
       h('tbody', null, rows.map((e) => h('tr', null,
-        h('td', { 'data-label': t('eq.name') }, h('strong', null, e.name), e.note ? h('div', { class: 'muted small' }, e.note) : null),
+        h('td', { 'data-label': t('eq.name') }, h('div', { class: 'row' }, thumb(e.photo_path), h('div', null, h('strong', null, e.name), e.note ? h('div', { class: 'muted small' }, e.note) : null))),
         h('td', { 'data-label': t('common.status') }, badge(t(`eq.s.${e.status}`), KIND[e.status])),
         h('td', { 'data-label': t('eq.next') }, e.next_service ? (e.next_service < today() ? badge(fmtDate(e.next_service), 'warn') : fmtDate(e.next_service)) : t('common.none')),
         h('td', { class: 'actions', 'data-label': t('common.actions') },
           button(t('eq.setStatus'), async () => { if (await guard(() => status(e))) load(); }, 'btn small primary'),
           button(t('eq.history'), () => guard(() => history(e)), 'btn small'),
+          canManage() ? button(t('eq.photo'), () => guard(async () => { const f = await pickPhoto(); if (!f) return; await uploadEquipmentPhoto(state.club.id, e.id, f); toast(t('eq.photoDone'), 'ok'); load(); }), 'btn small') : null,
           canManage() ? button(t('shop.edit'), async () => { if (await guard(() => edit(e))) load(); }, 'btn small') : null))))));
   }
   await load();

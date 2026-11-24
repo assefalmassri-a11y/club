@@ -28,8 +28,8 @@ export async function render(box) {
 
   box.append(h('div', { class: 'tiles' },
     tile(t('ov.inside'), inside, 'inside', 'ok'),
-    tile(t('ov.checkins24'), checkins, 'clock'),
-    tile(t('ov.members'), activeMembers, 'members'),
+    tile(t('ov.checkins24'), checkins, 'clock', 'sky'),
+    tile(t('ov.members'), activeMembers, 'members', 'indigo'),
     tile(t('ov.unpaid'), unpaid, 'wallet', 'warn'),
     tile(t('ov.overdue'), overdue, 'warn', 'bad')));
 

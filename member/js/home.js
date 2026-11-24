@@ -6,6 +6,7 @@ import { pinControl } from './pin.js';
 import { privacyControl } from './privacy.js';
 import { pushControl } from '../../js/push.js';
 import { langControl } from '../../js/lang.js';
+import { themeControl } from '../../js/theme.js';
 import { avatar } from '../../js/photo.js';
 
 export async function render(box, ctx) {
@@ -50,6 +51,6 @@ export async function render(box, ctx) {
         h('div', { class: 'row' }, h('span', null, `${fmtDate(x.starts_on)} → ${fmtDate(x.ends_on)}`), badge(t(`m.sub.${x.status}`), x.status === 'active' ? 'ok' : (x.status === 'paused' ? 'warn' : ''))),
         h('div', { class: 'muted small' }, h('bdi', null, fmtMoney(x.price_cents, String(x.currency).trim())))))));
   }
-  box.append(h('div', { class: 'list-simple section' }, pinControl(), pushControl(), langControl(), privacyControl()));
+  box.append(h('div', { class: 'list-simple section' }, pinControl(), pushControl(), langControl(), themeControl(), privacyControl()));
   return null;
 }

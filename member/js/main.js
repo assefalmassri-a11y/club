@@ -2,6 +2,7 @@ import { sb } from '../../js/supa.js';
 import { state } from '../../js/state.js';
 import { h, clear, spinner, toast, errText } from '../../js/dom.js';
 import { t, initLang } from '../../js/i18n.js';
+import { initTheme } from '../../js/theme.js';
 import { icon } from '../../js/icons.js';
 import { showLogin, handleRecovery } from '../../js/auth.js';
 import { installErrorLog } from '../../js/errlog.js';
@@ -17,6 +18,7 @@ import * as pt from './pt.js';
 import * as board from './board.js';
 
 initLang();
+initTheme();
 installErrorLog('member');
 const root = document.getElementById('app');
 const TABS = [

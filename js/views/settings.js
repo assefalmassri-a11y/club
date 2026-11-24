@@ -4,6 +4,7 @@ import { h, button, openForm, toast, guard, errText } from '../dom.js';
 import { t } from '../i18n.js';
 import { pushControl } from '../push.js';
 import { langControl } from '../lang.js';
+import { themeControl } from '../theme.js';
 import { loadRates, clearRates } from '../fx.js';
 
 export async function render(box) {
@@ -24,7 +25,7 @@ export async function render(box) {
     branchesEl,
     h('h3', { class: 'section' }, t('set.account')),
     h('div', { class: 'list-simple' }, h('div', { class: 'item' }, h('span', { class: 'muted' }, t('auth.email')), h('strong', { class: 'ltr' }, state.session.user.email || '')),
-      pushControl(), langControl()),
+      pushControl(), langControl(), themeControl()),
     h('div', { class: 'row end', style: null }, button(t('set.changePassword'), () => guard(changePassword), 'btn')));
 
   async function drawFx() {

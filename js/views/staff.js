@@ -3,6 +3,7 @@ import { state } from '../state.js';
 import { h, clear, badge, button, openForm, toast, guard, confirmBox } from '../dom.js';
 import { t } from '../i18n.js';
 import { openPayroll } from './payroll.js';
+import { openTrainerReport } from './trainer-report.js';
 
 function branchName(id) { const b = state.branches.find((x) => x.id === id); return b ? b.name : t('common.none'); }
 
@@ -41,6 +42,7 @@ export async function render(box) {
       h('td', { 'data-label': t('staff.role') }, badge(t(`role.${r.role}`), r.role === 'owner' ? 'ok' : '')),
       h('td', { 'data-label': t('common.branch') }, r.branch_id ? branchName(r.branch_id) : t('ctx.allBranches')),
       h('td', { class: 'actions', 'data-label': t('common.actions') },
+        isOwner && r.role === 'trainer' ? button(t('tr.report'), () => openTrainerReport(r), 'btn small primary') : null,
         isOwner && r.role !== 'owner' && r.user_id !== me ? button(t('staff.remove'), async () => {
           if (!(await confirmBox(`${t('staff.remove')}: ${r.email}؟`))) return;
           await guard(async () => {
