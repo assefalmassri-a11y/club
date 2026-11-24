@@ -9,3 +9,6 @@ export const DEFAULT_DECIMALS = 2;
 export const LOCALE = 'ar-u-nu-latn';
 export const CHAT_RETENTION_DAYS = 21;
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+// Public VAPID key for Web Push (the private key never leaves the server).
+export const VAPID_PUBLIC = 'BCRVK38P54X_zox-iO4J7fRX0dAEX6Qh2a23lbwnnyLEw9lz8vY3traQpNO_T4LJG3GCSCgDVAhX2vBTFJ98C58';

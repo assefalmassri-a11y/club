@@ -1,6 +1,6 @@
 // Small DOM helpers. Everything is built with textContent / text nodes: never innerHTML with data.
-import { t } from './i18n.js';
-import { CURRENCY_DECIMALS, DEFAULT_DECIMALS, LOCALE } from './config.js';
+import { t, locale } from './i18n.js';
+import { CURRENCY_DECIMALS, DEFAULT_DECIMALS } from './config.js';
 
 export function h(tag, attrs, ...kids) {
   const e = document.createElement(tag);
@@ -50,7 +50,7 @@ export function decimals(cur) { return CURRENCY_DECIMALS[cur] ?? DEFAULT_DECIMAL
 export function fmtMoney(minor, cur) {
   const d = decimals(cur);
   const n = Number(minor) / 10 ** d;
-  return `${n.toLocaleString(LOCALE, { minimumFractionDigits: d, maximumFractionDigits: d })} ${cur}`;
+  return `${n.toLocaleString(locale(), { minimumFractionDigits: d, maximumFractionDigits: d })} ${cur}`;
 }
 
 export function toMinor(text, cur) {
@@ -62,12 +62,12 @@ export function toMinor(text, cur) {
 
 export function fmtDate(d) {
   if (!d) return t('common.none');
-  return new Date(d.length === 10 ? `${d}T00:00:00` : d).toLocaleDateString(LOCALE, { year: 'numeric', month: 'short', day: 'numeric' });
+  return new Date(d.length === 10 ? `${d}T00:00:00` : d).toLocaleDateString(locale(), { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 export function fmtDateTime(d) {
   if (!d) return t('common.none');
-  return new Date(d).toLocaleString(LOCALE, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return new Date(d).toLocaleString(locale(), { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 export function today() {

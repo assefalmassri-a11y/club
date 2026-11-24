@@ -2,6 +2,8 @@ import { sb } from '../supa.js';
 import { state } from '../state.js';
 import { h, button, openForm, toast, guard, errText } from '../dom.js';
 import { t } from '../i18n.js';
+import { pushControl } from '../push.js';
+import { langControl } from '../lang.js';
 
 export async function render(box) {
   const branchesEl = h('div', { class: 'list-simple' });
@@ -17,7 +19,8 @@ export async function render(box) {
       isOwner ? button(t('set.addBranch'), async () => { if (await guard(addBranch)) { await refreshBranches(); } }, 'btn small primary') : null),
     branchesEl,
     h('h3', { class: 'section' }, t('set.account')),
-    h('div', { class: 'list-simple' }, h('div', { class: 'item' }, h('span', { class: 'muted' }, t('auth.email')), h('strong', { class: 'ltr' }, state.session.user.email || ''))),
+    h('div', { class: 'list-simple' }, h('div', { class: 'item' }, h('span', { class: 'muted' }, t('auth.email')), h('strong', { class: 'ltr' }, state.session.user.email || '')),
+      pushControl(), langControl()),
     h('div', { class: 'row end', style: null }, button(t('set.changePassword'), () => guard(changePassword), 'btn')));
 
   async function addBranch() {

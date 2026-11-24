@@ -1,10 +1,11 @@
+import { langControl } from './lang.js';
 import { sb } from './supa.js';
 import { h, clear, toast, errText } from './dom.js';
 import { t } from './i18n.js';
 
 function shell(root, title, ...children) {
   clear(root);
-  root.append(h('main', { class: 'auth-card' }, h('h1', { class: 'brand' }, t('app.name')), h('h2', null, title), ...children));
+  root.append(h('main', { class: 'auth-card' }, h('h1', { class: 'brand' }, t('app.name')), h('h2', null, title), ...children, h('div', { class: 'list-simple section' }, langControl())));
 }
 
 export function showLogin(root) {

@@ -2,7 +2,7 @@ import { sb } from './supa.js';
 import { gate } from './auth.js';
 import { state, canManage, isFrontDesk } from './state.js';
 import { h, clear, spinner, toast, errText, openForm } from './dom.js';
-import { t, dir } from './i18n.js';
+import { t, initLang } from './i18n.js';
 import { icon } from './icons.js';
 
 import * as overview from './views/overview.js';
@@ -18,7 +18,7 @@ import * as reports from './views/reports.js';
 import * as clients from './views/clients.js';
 
 const root = document.getElementById('app');
-document.documentElement.dir = dir();
+initLang();
 
 const TABS = [
   { id: 'overview', view: overview, roles: ['owner', 'branch_manager', 'staff'] },

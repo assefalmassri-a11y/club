@@ -1,5 +1,8 @@
 // UI strings. Arabic first; add another language by adding a dictionary and calling setLang().
+import { en } from './lang-en.js';
+
 const dicts = {
+  en,
   ar: {
     'app.name': 'Club',
     'app.loading': 'جارٍ التحميل…',
@@ -19,6 +22,19 @@ const dicts = {
     'common.status': 'الحالة',
     'common.actions': 'إجراءات',
     'common.sending': 'جارٍ الإرسال…',
+    'mem.planBranch': 'تقييد الاشتراك بفرع',
+    'mem.allBranches': 'كل الفروع',
+    'lang.label': 'اللغة',
+    'lang.ar': 'العربية',
+    'lang.en': 'English',
+    'm.memberNo': 'رقم العضوية',
+    'push.title': 'إشعارات الجهاز',
+    'push.enable': 'تفعيل',
+    'push.disable': 'إيقاف',
+    'push.on': 'تم تفعيل الإشعارات',
+    'push.off': 'تم إيقاف الإشعارات',
+    'push.denied': 'تم رفض إذن الإشعارات من المتصفح',
+    'push.unsupported': 'الإشعارات غير مدعومة على هذا المتصفح (على آيفون ثبّت التطبيق على الشاشة الرئيسية أولاً)',
 
     'auth.login': 'تسجيل الدخول',
     'auth.signup': 'حساب جديد',
@@ -322,11 +338,26 @@ const dicts = {
   },
 };
 
+const SUPPORTED = ['ar', 'en'];
 let lang = 'ar';
-export function setLang(l) { if (dicts[l]) lang = l; }
+export function getLang() { return lang; }
+export function initLang() {
+  let l = null;
+  try { l = localStorage.getItem('club.lang'); } catch (_) { /* storage unavailable */ }
+  if (!SUPPORTED.includes(l)) l = (navigator.language || 'ar').toLowerCase().startsWith('en') ? 'en' : 'ar';
+  setLang(l);
+}
+export function setLang(l) {
+  if (!SUPPORTED.includes(l)) return;
+  lang = l;
+  try { localStorage.setItem('club.lang', l); } catch (_) { /* ignore */ }
+  document.documentElement.lang = l;
+  document.documentElement.dir = dir();
+}
 export function dir() { return lang === 'ar' ? 'rtl' : 'ltr'; }
+export function locale() { return lang === 'ar' ? 'ar-u-nu-latn' : 'en-GB'; }
 export function t(key, vars) {
-  let s = (dicts[lang] && dicts[lang][key]) || key;
+  let s = (dicts[lang] && dicts[lang][key]) || (dicts.ar && dicts.ar[key]) || key;
   if (vars) for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, String(v));
   return s;
 }

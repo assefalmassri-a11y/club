@@ -1,7 +1,7 @@
 import { sb } from '../../js/supa.js';
 import { state } from '../../js/state.js';
 import { h, clear, spinner, toast, errText } from '../../js/dom.js';
-import { t } from '../../js/i18n.js';
+import { t, initLang } from '../../js/i18n.js';
 import { icon } from '../../js/icons.js';
 import { showLogin } from '../../js/auth.js';
 import { me } from './ctx.js';
@@ -11,6 +11,7 @@ import * as events from './events.js';
 import * as invoices from './invoices.js';
 import * as chat from './chat.js';
 
+initLang();
 const root = document.getElementById('app');
 const TABS = [
   { id: 'home', ic: 'overview', view: home },
@@ -64,7 +65,7 @@ function showLink() {
 }
 
 async function loadMe() {
-  const { data: ms, error } = await sb.from('members').select('id, club_id, branch_id, full_name, status').order('created_at');
+  const { data: ms, error } = await sb.from('members').select('id, member_no, club_id, branch_id, full_name, status').order('created_at');
   if (error) throw error;
   if (!ms || !ms.length) return false;
   me.member = ms[0];

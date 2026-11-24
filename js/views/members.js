@@ -60,12 +60,13 @@ async function managePlans() {
         { name: 'name', label: t('mem.planName'), required: true, maxlength: 80 },
         { name: 'price', label: `${t('mem.planPrice')} (${cur})`, type: 'number', required: true, min: '0', step: String(1 / 10 ** decimals(cur)) },
         { name: 'days', label: t('mem.planDays'), type: 'number', required: true, min: '1', step: '1' },
+        { name: 'branch', label: t('mem.planBranch'), type: 'select', value: '', options: [{ value: '', label: t('mem.allBranches') }, ...(state.branches || []).map((b) => ({ value: b.id, label: b.name }))] },
       ],
       onSubmit: async (v) => {
         const minor = Number.isFinite(Number(v.price)) && Number(v.price) >= 0 ? Math.round(Number(v.price) * 10 ** decimals(cur)) : null;
         const days = Number(v.days);
         if (minor === null || !Number.isInteger(days) || days < 1) throw new Error(t('err.invalid'));
-        const { error: e } = await sb.from('membership_plans').insert({ club_id: state.club.id, name: v.name, price_cents: minor, currency: cur, duration_days: days });
+        const { error: e } = await sb.from('membership_plans').insert({ club_id: state.club.id, name: v.name, price_cents: minor, currency: cur, duration_days: days, branch_id: v.branch || null });
         if (e) throw e;
       },
     });
@@ -74,7 +75,7 @@ async function managePlans() {
   }, 'btn primary');
   overlay.append(h('div', { class: 'modal' }, h('h2', null, t('mem.plans')),
     (plans || []).length ? h('div', { class: 'list-simple' }, plans.map((p) => h('div', { class: 'item' },
-      h('span', null, `${p.name} — `, h('bdi', null, fmtMoney(p.price_cents, p.currency.trim())), ` / ${p.duration_days}`, p.active ? null : h('span', { class: 'muted' }, ' (x)')),
+      h('span', null, `${p.name} — `, h('bdi', null, fmtMoney(p.price_cents, p.currency.trim())), ` / ${p.duration_days} · `, p.branch_id ? ((state.branches || []).find((b) => b.id === p.branch_id)?.name || t('common.branch')) : t('mem.allBranches'), p.active ? null : h('span', { class: 'muted' }, ' (x)')),
       h('span', { class: 'row gap' },
         button(t('mem.editPlan'), async () => { await editPlan(p); close(); managePlans().catch((e) => toast(String(e.message || e), 'error')); }, 'btn small'),
         button(p.active ? t('mem.planToggleOff') : t('mem.planToggleOn'), () => guard(async () => { const { error: e } = await sb.from('membership_plans').update({ active: !p.active }).eq('id', p.id); if (e) throw e; toast(t('mem.planSaved'), 'ok'); close(); await managePlans(); }), 'btn small'))))) : h('p', { class: 'muted' }, t('mem.noPlans')),
@@ -218,9 +219,10 @@ export async function render(box, ctx) {
 
   async function load() {
     clear(list);
-    let q = scoped(sb.from('members').select('id, full_name, phone, email, status, branch_id').order('full_name').limit(100));
+    let q = scoped(sb.from('members').select('id, member_no, full_name, phone, email, status, branch_id').order('full_name').limit(100));
     const term = search.value.trim().replace(/[%_\\,()]/g, ' ');
-    if (term) q = q.ilike('full_name', `%${term}%`);
+    if (/^\d{1,9}$/.test(term)) q = q.or(`member_no.eq.${term},phone.ilike.%${term}%`);
+    else if (term) q = q.ilike('full_name', `%${term}%`);
     const { data, error } = await q;
     if (error) throw error;
     const members = data || [];
@@ -232,7 +234,7 @@ export async function render(box, ctx) {
     for (const r of ms || []) if (!until.has(r.member_id)) until.set(r.member_id, r.ends_on);
 
     const body = members.map((m) => h('tr', null,
-      h('td', { 'data-label': t('mem.name') }, h('strong', null, m.full_name), h('div', { class: 'muted small ltr' }, m.phone || '')),
+      h('td', { 'data-label': t('mem.name') }, h('strong', null, m.full_name), h('div', { class: 'muted small ltr' }, `#${m.member_no}${m.phone ? ` · ${m.phone}` : ''}`)),
       h('td', { 'data-label': t('common.branch') }, branchName(m.branch_id)),
       h('td', { 'data-label': t('common.status') }, badge(t(`mem.status.${m.status}`), STATUS_KIND[m.status])),
       h('td', { 'data-label': t('mem.membership') }, until.has(m.id) ? `${t('mem.until')} ${fmtDate(until.get(m.id))}` : h('span', { class: 'muted' }, t('mem.noMembership'))),
