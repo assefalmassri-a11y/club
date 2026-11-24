@@ -1,3 +1,5 @@
+import { calendarTerm } from '../billing.js';
+import { code39 } from '../barcode.js';
 import { sb } from '../supa.js';
 import { state, scoped, canManage } from '../state.js';
 import { h, clear, badge, button, openForm, toast, guard, fmtDate, fmtMoney, toMinor, today, addDays, decimals } from '../dom.js';
@@ -37,18 +39,20 @@ async function editPlan(p) {
       { name: 'name', label: t('mem.planName'), required: true, maxlength: 80, value: p.name },
       { name: 'price', label: `${t('mem.planPrice')} (${cur})`, type: 'number', required: true, min: '0', step: String(1 / 10 ** d), value: String(p.price_cents / 10 ** d) },
       { name: 'days', label: t('mem.planDays'), type: 'number', required: true, min: '1', step: '1', value: String(p.duration_days) },
+      { name: 'calendar', label: t('mem.planMode'), type: 'select', value: p.calendar ? '1' : '0', options: [{ value: '0', label: t('mem.modeRolling') }, { value: '1', label: t('mem.modeCalendar') }] },
+      { name: 'branch', label: t('mem.planBranch'), type: 'select', value: p.branch_id || '', options: [{ value: '', label: t('mem.allBranches') }, ...(state.branches || []).map((b) => ({ value: b.id, label: b.name }))] },
     ],
     onSubmit: async (v) => {
       const minor = Math.round(Number(v.price) * 10 ** d); const days = Number(v.days);
       if (!Number.isFinite(minor) || minor < 0 || !Number.isInteger(days) || days < 1) throw new Error(t('err.invalid'));
-      const { error } = await sb.from('membership_plans').update({ name: v.name, price_cents: minor, duration_days: days }).eq('id', p.id);
+      const { error } = await sb.from('membership_plans').update({ name: v.name, price_cents: minor, duration_days: days, branch_id: v.branch || null, calendar: v.calendar === '1' }).eq('id', p.id);
       if (error) throw error;
     },
   });
 }
 
 async function managePlans() {
-  const { data: plans, error } = await sb.from('membership_plans').select('id, name, price_cents, currency, duration_days, active, branch_id').order('name');
+  const { data: plans, error } = await sb.from('membership_plans').select('id, name, price_cents, currency, duration_days, active, branch_id, calendar').order('name');
   if (error) throw error;
   const overlay = h('div', { class: 'overlay' });
   const close = () => overlay.remove();
@@ -60,13 +64,14 @@ async function managePlans() {
         { name: 'name', label: t('mem.planName'), required: true, maxlength: 80 },
         { name: 'price', label: `${t('mem.planPrice')} (${cur})`, type: 'number', required: true, min: '0', step: String(1 / 10 ** decimals(cur)) },
         { name: 'days', label: t('mem.planDays'), type: 'number', required: true, min: '1', step: '1' },
+        { name: 'calendar', label: t('mem.planMode'), type: 'select', value: '0', options: [{ value: '0', label: t('mem.modeRolling') }, { value: '1', label: t('mem.modeCalendar') }] },
         { name: 'branch', label: t('mem.planBranch'), type: 'select', value: '', options: [{ value: '', label: t('mem.allBranches') }, ...(state.branches || []).map((b) => ({ value: b.id, label: b.name }))] },
       ],
       onSubmit: async (v) => {
         const minor = Number.isFinite(Number(v.price)) && Number(v.price) >= 0 ? Math.round(Number(v.price) * 10 ** decimals(cur)) : null;
         const days = Number(v.days);
         if (minor === null || !Number.isInteger(days) || days < 1) throw new Error(t('err.invalid'));
-        const { error: e } = await sb.from('membership_plans').insert({ club_id: state.club.id, name: v.name, price_cents: minor, currency: cur, duration_days: days, branch_id: v.branch || null });
+        const { error: e } = await sb.from('membership_plans').insert({ club_id: state.club.id, name: v.name, price_cents: minor, currency: cur, duration_days: days, branch_id: v.branch || null, calendar: v.calendar === '1' });
         if (e) throw e;
       },
     });
@@ -75,7 +80,7 @@ async function managePlans() {
   }, 'btn primary');
   overlay.append(h('div', { class: 'modal' }, h('h2', null, t('mem.plans')),
     (plans || []).length ? h('div', { class: 'list-simple' }, plans.map((p) => h('div', { class: 'item' },
-      h('span', null, `${p.name} — `, h('bdi', null, fmtMoney(p.price_cents, p.currency.trim())), ` / ${p.duration_days} · `, p.branch_id ? ((state.branches || []).find((b) => b.id === p.branch_id)?.name || t('common.branch')) : t('mem.allBranches'), p.active ? null : h('span', { class: 'muted' }, ' (x)')),
+      h('span', null, `${p.name} — `, h('bdi', null, fmtMoney(p.price_cents, p.currency.trim())), ` / ${p.calendar ? t('mem.modeCalendar') : p.duration_days} · `, p.branch_id ? ((state.branches || []).find((b) => b.id === p.branch_id)?.name || t('common.branch')) : t('mem.allBranches'), p.active ? null : h('span', { class: 'muted' }, ' (x)')),
       h('span', { class: 'row gap' },
         button(t('mem.editPlan'), async () => { await editPlan(p); close(); managePlans().catch((e) => toast(String(e.message || e), 'error')); }, 'btn small'),
         button(p.active ? t('mem.planToggleOff') : t('mem.planToggleOn'), () => guard(async () => { const { error: e } = await sb.from('membership_plans').update({ active: !p.active }).eq('id', p.id); if (e) throw e; toast(t('mem.planSaved'), 'ok'); close(); await managePlans(); }), 'btn small'))))) : h('p', { class: 'muted' }, t('mem.noPlans')),
@@ -84,28 +89,32 @@ async function managePlans() {
 }
 
 async function subscribe(member) {
-  const { data: plans, error } = await sb.from('membership_plans').select('id, name, price_cents, currency, duration_days, branch_id').eq('active', true).order('name');
+  const { data: plans, error } = await sb.from('membership_plans').select('id, name, price_cents, currency, duration_days, branch_id, calendar').eq('active', true).order('name');
   if (error) throw error;
+  const { data: lastMs } = await sb.from('memberships').select('ends_on').eq('member_id', member.id).in('status', ['active', 'paused']).order('ends_on', { ascending: false }).limit(1);
+  const defStart = lastMs && lastMs[0] && lastMs[0].ends_on >= today() ? addDays(lastMs[0].ends_on, 1) : today();
   const usable = (plans || []).filter((p) => !p.branch_id || p.branch_id === member.branch_id);
   if (!usable.length) { toast(t('mem.noPlans'), 'error'); return false; }
   const ok = await openForm({
     title: `${t('mem.subscribe')}: ${member.full_name}`,
     fields: [
-      { name: 'plan', label: t('mem.plan'), type: 'select', required: true, options: usable.map((p) => ({ value: p.id, label: `${p.name} — ${fmtMoney(p.price_cents, p.currency.trim())}` })) },
-      { name: 'start', label: t('mem.startsOn'), type: 'date', required: true, value: today() },
+      { name: 'plan', label: t('mem.plan'), type: 'select', required: true, options: usable.map((p) => ({ value: p.id, label: `${p.name} — ${fmtMoney(p.price_cents, p.currency.trim())}${p.calendar ? ` (${t('mem.modeCalendar')})` : ''}` })) },
+      { name: 'start', label: t('mem.startsOn'), type: 'date', required: true, value: defStart },
     ],
     onSubmit: async (v) => {
       const plan = usable.find((p) => p.id === v.plan);
       if (!plan) throw new Error(t('err.invalid'));
+      let ends = addDays(v.start, plan.duration_days - 1); let price = plan.price_cents;
+      if (plan.calendar) { const c = calendarTerm(v.start, plan.price_cents); ends = c.ends_on; price = c.price_minor; }
       const { error: e } = await sb.from('memberships').insert({
         club_id: state.club.id, member_id: member.id, plan_id: plan.id, branch_id: member.branch_id,
-        starts_on: v.start, ends_on: addDays(v.start, plan.duration_days - 1),
-        price_cents: plan.price_cents, currency: plan.currency.trim(),
+        starts_on: v.start, ends_on: ends,
+        price_cents: price, currency: plan.currency.trim(),
       });
       if (e) throw e;
+      toast(t('mem.subPriced', { amount: fmtMoney(price, plan.currency.trim()), date: ends }), 'ok');
     },
   });
-  if (ok === true) toast(t('mem.subscribed'), 'ok');
   return ok === true;
 }
 
@@ -186,6 +195,19 @@ async function assignTrainer(member) {
   if (ok === true) toast(t('mem.trainerDone'), 'ok');
 }
 
+function printCard(member) {
+  const overlay = h('div', { class: 'overlay print-overlay' });
+  const card = h('div', { class: 'id-card' },
+    h('div', { class: 'id-club' }, state.club.name),
+    h('div', { class: 'id-name' }, member.full_name),
+    h('div', { class: 'id-no ltr' }, `#${member.member_no}`),
+    code39(member.member_no));
+  overlay.append(h('div', { class: 'modal small' }, card,
+    h('div', { class: 'row end' }, button(t('common.close'), () => overlay.remove()), button(t('mem.print'), () => window.print(), 'btn primary'))));
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  document.body.append(overlay);
+}
+
 function moreMenu(member, ctx) {
   const overlay = h('div', { class: 'overlay' });
   const run = (fn) => async () => { overlay.remove(); await guard(fn); };
@@ -194,6 +216,7 @@ function moreMenu(member, ctx) {
       button(t('mem.edit'), async () => { overlay.remove(); await guard(() => editMember(member)); ctx.rerender(); }, 'btn block'),
       button(t('mem.manageSub'), async () => { overlay.remove(); await guard(() => manageMembership(member)); ctx.rerender(); }, 'btn block'),
       button(t('mem.card'), run(() => issueCard(member)), 'btn block'),
+      button(t('mem.printCard'), () => { overlay.remove(); printCard(member); }, 'btn block'),
       button(t('mem.invite'), run(() => showInvite(member)), 'btn block'),
       button(t('mem.trainer'), run(() => assignTrainer(member)), 'btn block'),
       button(t('mem.chat'), run(async () => {

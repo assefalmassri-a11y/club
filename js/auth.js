@@ -43,7 +43,15 @@ export function showLogin(root) {
       });
       const toggle = h('button', { type: 'button', class: 'link' }, mode === 'login' ? t('auth.signup') : t('auth.login'));
       toggle.addEventListener('click', () => { mode = mode === 'login' ? 'signup' : 'login'; render(); });
-      shell(root, mode === 'login' ? t('auth.login') : t('auth.signup'), form, toggle);
+      const forgot = mode === 'login' ? h('button', { type: 'button', class: 'link' }, t('auth.forgot')) : null;
+      if (forgot) forgot.addEventListener('click', async () => {
+        msg.textContent = '';
+        if (!email.value.trim()) { msg.textContent = t('auth.forgotEmail'); email.focus(); return; }
+        const { error } = await sb.auth.resetPasswordForEmail(email.value.trim(), { redirectTo: `${location.origin}${location.pathname}` });
+        if (error) { msg.textContent = errText(error); return; }
+        toast(t('auth.forgotSent'), 'ok');
+      });
+      shell(root, mode === 'login' ? t('auth.login') : t('auth.signup'), form, forgot, toggle);
     };
     render();
   });
@@ -117,4 +125,29 @@ export async function gate(root) {
     }
     await showMfaEnroll(root);
   }
+}
+
+// Password-recovery link: the URL hash carries a short-lived recovery session. Returns true if handled.
+export async function handleRecovery(root) {
+  const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+  if (params.get('type') !== 'recovery' || !params.get('access_token') || !params.get('refresh_token')) return false;
+  const { error } = await sb.auth.setSession({ access_token: params.get('access_token'), refresh_token: params.get('refresh_token') });
+  history.replaceState(null, '', location.pathname + location.search); // never leave tokens in the address bar
+  if (error) { toast(errText(error), 'error'); return false; }
+  await new Promise((resolve) => {
+    const pw = h('input', { type: 'password', required: true, minlength: 10, autocomplete: 'new-password', dir: 'ltr' });
+    const msg = h('div', { class: 'form-error', role: 'alert' });
+    const go = h('button', { class: 'btn primary block', type: 'submit' }, t('common.save'));
+    const form = h('form', { class: 'form' }, h('label', { class: 'field' }, h('span', null, t('set.newPassword')), pw), msg, go);
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault(); msg.textContent = ''; go.disabled = true;
+      if (pw.value.length < 10) { msg.textContent = t('auth.passwordHint'); go.disabled = false; return; }
+      const { error: e } = await sb.auth.updateUser({ password: pw.value });
+      if (e) { msg.textContent = errText(e); go.disabled = false; return; }
+      toast(t('set.passwordChanged'), 'ok'); resolve();
+    });
+    shell(root, t('auth.resetTitle'), form);
+    pw.focus();
+  });
+  return true;
 }

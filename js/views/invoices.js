@@ -1,6 +1,6 @@
 import { sb } from '../supa.js';
 import { state, scoped, canManage, currency } from '../state.js';
-import { h, clear, badge, button, openForm, toast, guard, fmtDate, fmtMoney, toMinor, today, addDays } from '../dom.js';
+import { h, clear, badge, button, openForm, toast, guard, fmtDate, fmtMoney, toMinor, today, endOfMonth } from '../dom.js';
 import { t } from '../i18n.js';
 
 // Shared with the members view. Pass memberId to pre-select a member; otherwise a member must be picked.
@@ -20,7 +20,7 @@ export async function openNewInvoice({ memberId, memberName } = {}) {
       { name: 'label', label: t('inv.label'), required: true, maxlength: 140 },
       { name: 'amount', label: `${t('inv.amount')} (${cur})`, type: 'number', required: true, min: '0', step: 'any' },
       { name: 'issue', label: t('inv.issueDate'), type: 'date', required: true, value: today() },
-      { name: 'due', label: t('inv.dueDate'), type: 'date', required: true, value: addDays(today(), 7) },
+      { name: 'due', label: t('inv.dueDate'), type: 'date', required: true, value: endOfMonth(today()) },
     ].filter(Boolean),
     onSubmit: async (v) => {
       const minor = toMinor(v.amount, cur);

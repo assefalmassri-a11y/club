@@ -28,6 +28,7 @@ a{color:var(--pri-600)}
 .logo-mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--pri),var(--pri-600));color:var(--pri-fg);display:grid;place-items:center;font-weight:800;font-size:1.15rem;flex:none}
 .nav{display:flex;flex-direction:column;gap:.2rem}
 .nav button{display:flex;align-items:center;gap:.75rem;border:0;background:none;color:var(--mut);padding:.65rem .8rem;border-radius:10px;cursor:pointer;font:inherit;font-weight:600;text-align:start;transition:background .15s,color .15s}
+.nav .more-btn{display:none}
 .nav button:hover{background:var(--surface-2);color:var(--fg)}
 .nav button.active{background:var(--pri-50);color:var(--pri-600)}
 .side-foot{margin-top:auto}
@@ -106,6 +107,7 @@ ul.plain{list-style:none;padding:0;margin:.5rem 0}ul.plain li{padding:.5rem 0;bo
   .shell{flex-direction:column}
   .side{position:fixed;inset:auto 0 0 0;width:auto;height:auto;flex-direction:row;padding:.35rem .5rem calc(.35rem + env(safe-area-inset-bottom));z-index:15;border-inline-end:0;border-top:1px solid var(--bd)}
   .logo,.side-foot{display:none}.nav{flex-direction:row;width:100%;justify-content:space-around}
+  .nav .more-item{display:none}.nav .more-btn{display:flex}
   .nav button{flex-direction:column;gap:.15rem;padding:.4rem .6rem;font-size:.7rem;flex:1;align-items:center}
   .top-actions{display:block}.top-actions .lbl{display:none}
   .topbar{padding:.6rem 1rem}.content{padding:1rem 1rem 6rem}.chat-layout{grid-template-columns:1fr}.ctx select{min-width:0;max-width:44vw}
@@ -122,3 +124,17 @@ ul.plain{list-style:none;padding:0;margin:.5rem 0}ul.plain li{padding:.5rem 0;bo
 .bar-label{color:var(--mut);direction:ltr;text-align:start}.bar-track{background:var(--surface-2);border-radius:6px;height:12px;overflow:hidden;display:block}
 .bar-fill{display:block;height:100%;background:var(--pri);border-radius:6px;min-width:2px}.bar-fill.ok{background:var(--ok)}.bar-fill.bad{background:var(--bad)}.bar-val{min-width:2.5em;text-align:end;font-variant-numeric:tabular-nums}
 .view>h2{margin-bottom:1rem}.section{margin-top:1.4rem}
+
+/* Membership ID card + print */
+.id-card{border:1px solid var(--border,#d6dbe3);border-radius:14px;padding:1rem 1.25rem;text-align:center;background:#fff;color:#0f172a;max-width:340px;margin:0 auto 1rem}
+.id-club{font-weight:600;color:#0f766e;margin-bottom:.5rem}
+.id-name{font-size:1.2rem;font-weight:700}
+.id-no{font-size:1.6rem;font-weight:800;letter-spacing:.06em;margin:.35rem 0 .75rem}
+.id-card .barcode{width:100%;height:auto;max-height:90px}
+@media print{
+  body>*:not(.print-overlay){display:none!important}
+  .print-overlay{position:static;background:none;backdrop-filter:none;padding:0;display:block}
+  .print-overlay .modal{box-shadow:none;border:0;padding:0;background:none}
+  .print-overlay .row{display:none}
+  .id-card{width:85.6mm;max-width:none;margin:0;break-inside:avoid}
+}

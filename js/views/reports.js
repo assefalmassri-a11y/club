@@ -71,6 +71,14 @@ export async function render(box) {
         const rows = await fetchAll(() => scoped(sb.from('invoices').select('number, label, amount_minor, currency, issue_date, due_date, status, paid_on').order('number')));
         downloadCsv('invoices.csv', ['number', 'label', 'amount_minor', 'currency', 'issue_date', 'due_date', 'status', 'paid_on'], rows.map((r) => [r.number, r.label, r.amount_minor, r.currency, r.issue_date, r.due_date, r.status, r.paid_on]));
       }),
+      exportBtn(t('rep.exCheckins'), async () => {
+        const rows = await fetchAll(() => scoped(sb.from('checkins').select('member_id, checked_in_at, method').order('checked_in_at', { ascending: false })));
+        downloadCsv('checkins.csv', ['member_id', 'checked_in_at', 'method'], rows.map((r) => [r.member_id, r.checked_in_at, r.method]));
+      }),
+      exportBtn(t('rep.exMemberships'), async () => {
+        const rows = await fetchAll(() => scoped(sb.from('memberships').select('member_id, starts_on, ends_on, status, price_cents, currency').order('starts_on', { ascending: false })));
+        downloadCsv('memberships.csv', ['member_id', 'starts_on', 'ends_on', 'status', 'price_cents', 'currency'], rows.map((r) => [r.member_id, r.starts_on, r.ends_on, r.status, r.price_cents, r.currency]));
+      }),
       exportBtn(t('rep.exLedger'), async () => {
         const rows = await fetchAll(() => scoped(sb.from('ledger_entries').select('entry_date, kind, label, amount_minor, currency').is('voided_at', null).order('entry_date')));
         downloadCsv('ledger.csv', ['date', 'kind', 'label', 'amount_minor', 'currency'], rows.map((r) => [r.entry_date, r.kind, r.label, r.amount_minor, r.currency]));

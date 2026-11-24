@@ -1,5 +1,5 @@
 import { sb } from './supa.js';
-import { gate } from './auth.js';
+import { gate, handleRecovery } from './auth.js';
 import { state, canManage, isFrontDesk } from './state.js';
 import { h, clear, spinner, toast, errText, openForm } from './dom.js';
 import { t, initLang } from './i18n.js';
@@ -16,12 +16,15 @@ import * as staff from './views/staff.js';
 import * as settings from './views/settings.js';
 import * as reports from './views/reports.js';
 import * as clients from './views/clients.js';
+import * as reception from './views/reception.js';
+import * as audit from './views/audit.js';
 
 const root = document.getElementById('app');
 initLang();
 
 const TABS = [
   { id: 'overview', view: overview, roles: ['owner', 'branch_manager', 'staff'] },
+  { id: 'reception', view: reception, roles: ['owner', 'branch_manager', 'staff'] },
   { id: 'members', view: members, roles: ['owner', 'branch_manager', 'staff'] },
   { id: 'invoices', view: invoices, roles: ['owner', 'branch_manager', 'staff'] },
   { id: 'ledger', view: ledger, roles: ['owner', 'branch_manager'] },
@@ -31,6 +34,7 @@ const TABS = [
   { id: 'doors', view: doors, roles: ['owner', 'branch_manager'] },
   { id: 'staff', view: staff, roles: ['owner', 'branch_manager'] },
   { id: 'chat', view: chat, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },
+  { id: 'audit', view: audit, roles: ['owner'] },
   { id: 'settings', view: settings, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },
 ];
 
@@ -98,6 +102,9 @@ async function show(tabId) {
   cleanup = null;
   currentTab = tabId;
   for (const b of nav.querySelectorAll('button')) b.classList.toggle('active', b.dataset.tab === tabId);
+  const cur = nav.querySelector(`[data-tab="${tabId}"]`);
+  const mb = nav.querySelector('[data-more]');
+  if (mb) mb.classList.toggle('active', !!cur && cur.classList.contains('more-item'));
   clear(content);
   content.append(spinner());
   const tab = TABS.find((x) => x.id === tabId);
@@ -125,7 +132,19 @@ function renderShell() {
   const out = h('button', { type: 'button', class: 'btn ghost', 'aria-label': t('auth.signout') }, icon('logout', 18), h('span', { class: 'lbl' }, t('auth.signout')));
   out.addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); });
 
-  nav = h('nav', { class: 'nav', 'aria-label': 'main' }, visibleTabs().map((tb) => h('button', { type: 'button', 'data-tab': tb.id, onClick: () => show(tb.id) }, icon(tb.id, 20), h('span', null, t(`tab.${tb.id}`)))));
+  const vis = visibleTabs();
+  const MAIN = 4; // on phones: 4 primary tabs + a "More" sheet
+  const navButtons = vis.map((tb, i) => h('button', { type: 'button', 'data-tab': tb.id, class: i >= MAIN && vis.length > MAIN + 1 ? 'more-item' : '', onClick: () => show(tb.id) }, icon(tb.id, 20), h('span', null, t(`tab.${tb.id}`))));
+  const moreBtn = h('button', { type: 'button', class: 'more-btn', 'data-more': '1', onClick: () => openMore() }, icon('more', 20), h('span', null, t('tab.more')));
+  function openMore() {
+    const overlay = h('div', { class: 'overlay' });
+    const items = vis.slice(MAIN).map((tb) => h('button', { type: 'button', class: 'btn block', onClick: () => { overlay.remove(); show(tb.id); } }, t(`tab.${tb.id}`)));
+    overlay.append(h('div', { class: 'modal small' }, h('div', { class: 'menu-list' }, items), h('div', { class: 'menu-list' }, h('button', { type: 'button', class: 'btn block ghost', onClick: async () => { await sb.auth.signOut(); location.reload(); } }, t('auth.signout'))),
+      h('div', { class: 'row end' }, h('button', { type: 'button', class: 'btn', onClick: () => overlay.remove() }, t('common.close')))));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    document.body.append(overlay);
+  }
+  nav = h('nav', { class: 'nav', 'aria-label': 'main' }, ...navButtons, vis.length > MAIN + 1 ? moreBtn : null);
   content = h('main', { class: 'content' });
   const initial = (state.club.name || '?').trim().charAt(0).toUpperCase();
 
@@ -145,6 +164,7 @@ async function start() {
   clear(root);
   root.append(spinner());
   try {
+    await handleRecovery(root);
     state.session = await gate(root);
     clear(root);
     root.append(spinner());

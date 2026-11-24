@@ -83,6 +83,14 @@ export function addDays(isoDate, days) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
+// Last day of the month of an ISO date (YYYY-MM-DD).
+export function endOfMonth(isoDate) {
+  const [y, m] = isoDate.split('-').map(Number);
+  const d = new Date(y, m, 0); // day 0 of next month = last day of this month
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 // ---------- modal form ----------
 // fields: [{ name, label, type: text|number|date|datetime-local|select|textarea|email|tel, options:[{value,label}], required, value, placeholder, maxlength, min, step }]
 export function openForm({ title, fields, submitLabel, onSubmit }) {
@@ -96,7 +104,7 @@ export function openForm({ title, fields, submitLabel, onSubmit }) {
       } else if (f.type === 'textarea') {
         input = h('textarea', { name: f.name, rows: 3, maxlength: f.maxlength, required: f.required, placeholder: f.placeholder }, f.value ?? '');
       } else {
-        input = h('input', { name: f.name, type: f.type || 'text', required: f.required, value: f.value ?? '', placeholder: f.placeholder, maxlength: f.maxlength, min: f.min, step: f.step, autocomplete: 'off', dir: f.dir });
+        input = h('input', { name: f.name, type: f.type || 'text', required: f.required, value: f.value ?? '', placeholder: f.placeholder, maxlength: f.maxlength, min: f.min, step: f.step, autocomplete: 'off', inputmode: f.inputmode, dir: f.dir });
       }
       inputs[f.name] = input;
       form.append(h('label', { class: 'field' }, h('span', null, f.label), input));

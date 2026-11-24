@@ -42,6 +42,8 @@ export async function render(box) {
     h('div', { class: 'list-simple' }, rows && rows.length ? rows.map((r) => h('div', { class: 'item' }, h('span', null, names.get(r.member_id) || t('common.none')), h('span', { class: 'muted small' }, right(r)))) : h('p', { class: 'muted' }, t('ov.none'))));
   box.append(h('div', { class: 'two-col' }, col(t('ov.expiring'), exp, (r) => fmtDate(r.ends_on)), col(t('ov.recent'), rec, (r) => fmtDateTime(r.checked_in_at))));
 
+  if (canManage()) await alerts(box);
+
   if (canManage()) {
     const { data, error } = await scoped(sb.from('ledger_totals').select('*'));
     if (!error && data && data.length) {
@@ -63,4 +65,31 @@ export async function render(box) {
     }
   }
   return null;
+}
+
+// Owner/manager alerts: lapsed this week, quiet for 14 days, overdue invoices.
+async function alerts(box) {
+  const td = today();
+  const since14 = new Date(Date.now() - 14 * 86400000).toISOString();
+  const [{ data: lapsed }, { data: covering }, { data: recent }, { data: late }] = await Promise.all([
+    scoped(sb.from('memberships').select('member_id, ends_on').in('status', ['active', 'expired']).gte('ends_on', addDays(td, -7)).lt('ends_on', td).order('ends_on', { ascending: false }).limit(200)),
+    scoped(sb.from('memberships').select('member_id').eq('status', 'active').lte('starts_on', td).gte('ends_on', td).limit(1000)),
+    scoped(sb.from('checkins').select('member_id').gte('checked_in_at', since14).limit(5000)),
+    scoped(sb.from('invoices').select('member_id, due_date, amount_minor, currency').eq('status', 'issued').lt('due_date', td).order('due_date').limit(8)),
+  ]);
+  const coveredSet = new Set((covering || []).map((r) => r.member_id));
+  const lapsedRows = []; const seen = new Set();
+  for (const r of lapsed || []) if (!coveredSet.has(r.member_id) && !seen.has(r.member_id)) { seen.add(r.member_id); lapsedRows.push(r); }
+  const came = new Set((recent || []).map((r) => r.member_id));
+  const quiet = [...coveredSet].filter((id) => !came.has(id)).slice(0, 8).map((id) => ({ member_id: id }));
+  const ids = [...new Set([...lapsedRows.slice(0, 8), ...quiet, ...(late || [])].map((r) => r.member_id))];
+  const names = new Map();
+  if (ids.length) { const { data: ms } = await sb.from('members').select('id, member_no, full_name').in('id', ids); for (const m of ms || []) names.set(m.id, m); }
+  const nm = (id) => { const m = names.get(id); return m ? `${m.full_name} #${m.member_no}` : t('common.none'); };
+  const col = (title, rows, right) => h('div', null, h('h3', null, `${title} (${rows.length})`),
+    h('div', { class: 'list-simple' }, rows.length ? rows.slice(0, 8).map((r) => h('div', { class: 'item' }, h('span', null, nm(r.member_id)), h('span', { class: 'muted small' }, right(r)))) : h('p', { class: 'muted' }, t('ov.none'))));
+  box.append(h('h3', { class: 'section' }, t('ov.alerts')),
+    h('div', { class: 'two-col' }, col(t('ov.lapsed'), lapsedRows, (r) => fmtDate(r.ends_on)), col(t('ov.quiet'), quiet, () => t('ov.quiet14'))),
+    h('div', { class: 'list-simple' }, h('h3', null, `${t('ov.lateInv')} (${(late || []).length})`),
+      (late || []).length ? late.map((r) => h('div', { class: 'item' }, h('span', null, nm(r.member_id)), h('span', { class: 'muted small' }, `${fmtDate(r.due_date)} · `, h('bdi', null, fmtMoney(r.amount_minor, String(r.currency).trim()))))) : h('p', { class: 'muted' }, t('ov.none'))));
 }

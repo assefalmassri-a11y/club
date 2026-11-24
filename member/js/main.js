@@ -3,13 +3,14 @@ import { state } from '../../js/state.js';
 import { h, clear, spinner, toast, errText } from '../../js/dom.js';
 import { t, initLang } from '../../js/i18n.js';
 import { icon } from '../../js/icons.js';
-import { showLogin } from '../../js/auth.js';
+import { showLogin, handleRecovery } from '../../js/auth.js';
 import { me } from './ctx.js';
 import * as home from './home.js';
 import * as scan from './scan.js';
 import * as events from './events.js';
 import * as invoices from './invoices.js';
 import * as chat from './chat.js';
+import * as activity from './activity.js';
 
 initLang();
 const root = document.getElementById('app');
@@ -18,6 +19,7 @@ const TABS = [
   { id: 'scan', ic: 'qr', view: scan },
   { id: 'events', ic: 'events', view: events },
   { id: 'invoices', ic: 'invoices', view: invoices },
+  { id: 'activity', ic: 'clock', view: activity },
   { id: 'chat', ic: 'chat', view: chat },
 ];
 let nav; let content; let cleanup = null;
@@ -79,6 +81,7 @@ async function loadMe() {
 async function start() {
   clear(root); root.append(spinner());
   try {
+    await handleRecovery(root);
     let { data: { session } } = await sb.auth.getSession();
     if (!session) { await showLogin(root); ({ data: { session } } = await sb.auth.getSession()); }
     state.session = session;

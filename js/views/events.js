@@ -57,17 +57,24 @@ export async function render(box) {
         { name: 'starts', label: t('ev.starts'), type: 'datetime-local', required: true },
         { name: 'ends', label: t('ev.ends'), type: 'datetime-local', required: true },
         { name: 'capacity', label: t('ev.capacity'), type: 'number', required: true, min: '1', step: '1', value: '20' },
+        { name: 'weeks', label: t('ev.weeks'), type: 'number', required: true, min: '1', max: '12', step: '1', value: '1' },
       ],
       onSubmit: async (v) => {
         const starts = new Date(v.starts);
         const ends = new Date(v.ends);
         const cap = Number(v.capacity);
         if (!(starts < ends) || !Number.isInteger(cap) || cap < 1) throw new Error(t('err.invalid'));
-        const { error } = await sb.rpc('create_event', {
-          p_branch_id: v.branch, p_title: v.title, p_description: v.desc || null, p_trainer_staff_id: null,
-          p_starts_at: starts.toISOString(), p_ends_at: ends.toISOString(), p_capacity: cap,
-        });
-        if (error) throw error;
+        const weeks = Number(v.weeks);
+        if (!Number.isInteger(weeks) || weeks < 1 || weeks > 12) throw new Error(t('err.invalid'));
+        for (let i = 0; i < weeks; i++) {
+          const s2 = new Date(starts); s2.setDate(s2.getDate() + 7 * i); // setDate keeps the local clock time across DST changes
+          const e2 = new Date(ends); e2.setDate(e2.getDate() + 7 * i);
+          const { error } = await sb.rpc('create_event', {
+            p_branch_id: v.branch, p_title: v.title, p_description: v.desc || null, p_trainer_staff_id: null,
+            p_starts_at: s2.toISOString(), p_ends_at: e2.toISOString(), p_capacity: cap,
+          });
+          if (error) throw new Error(i ? `${t('ev.partial', { n: i })}: ${error.message}` : error.message);
+        }
       },
     });
     if (ok === true) toast(t('ev.created'), 'ok');
