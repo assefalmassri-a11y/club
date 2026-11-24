@@ -112,6 +112,24 @@ async function showInvite(member) {
   document.body.append(overlay);
 }
 
+function moreMenu(member, ctx) {
+  const overlay = h('div', { class: 'overlay' });
+  const run = (fn) => async () => { overlay.remove(); await guard(fn); };
+  overlay.append(h('div', { class: 'modal small' }, h('h2', null, member.full_name),
+    h('div', { class: 'menu-list' },
+      button(t('mem.card'), run(() => issueCard(member)), 'btn block'),
+      button(t('mem.invite'), run(() => showInvite(member)), 'btn block'),
+      button(t('mem.chat'), run(async () => {
+        const { data: id, error } = await sb.rpc('open_support_conversation', { p_member: member.id });
+        if (error) throw error;
+        state.openConversation = id;
+        ctx.goto('chat');
+      }), 'btn block')),
+    h('div', { class: 'row end' }, button(t('common.close'), () => overlay.remove()))));
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  document.body.append(overlay);
+}
+
 export async function render(box, ctx) {
   const search = h('input', { type: 'search', placeholder: t('common.search'), maxlength: 60, 'aria-label': t('common.search') });
   const list = h('div', { class: 'table-wrap' });
@@ -138,7 +156,7 @@ export async function render(box, ctx) {
     for (const r of ms || []) if (!until.has(r.member_id)) until.set(r.member_id, r.ends_on);
 
     const body = members.map((m) => h('tr', null,
-      h('td', { 'data-label': t('mem.name') }, h('strong', null, m.full_name), h('div', { class: 'muted small', dir: 'ltr' }, m.phone || '')),
+      h('td', { 'data-label': t('mem.name') }, h('strong', null, m.full_name), h('div', { class: 'muted small ltr' }, m.phone || '')),
       h('td', { 'data-label': t('common.branch') }, branchName(m.branch_id)),
       h('td', { 'data-label': t('common.status') }, badge(t(`mem.status.${m.status}`), STATUS_KIND[m.status])),
       h('td', { 'data-label': t('mem.membership') }, until.has(m.id) ? `${t('mem.until')} ${fmtDate(until.get(m.id))}` : h('span', { class: 'muted' }, t('mem.noMembership'))),
@@ -150,14 +168,7 @@ export async function render(box, ctx) {
         }), 'btn small'),
         button(t('mem.subscribe'), async () => { if (await guard(() => subscribe(m))) load(); }, 'btn small'),
         button(t('mem.invoice'), () => guard(() => openNewInvoice({ memberId: m.id, memberName: m.full_name })), 'btn small'),
-        button(t('mem.card'), () => guard(() => issueCard(m)), 'btn small'),
-        button(t('mem.invite'), () => guard(() => showInvite(m)), 'btn small'),
-        button(t('mem.chat'), () => guard(async () => {
-          const { data: id, error: e } = await sb.rpc('open_support_conversation', { p_member: m.id });
-          if (e) throw e;
-          state.openConversation = id;
-          ctx.goto('chat');
-        }), 'btn small'))));
+        button(t('mem.more'), () => moreMenu(m, ctx), 'btn small ghost'))));
 
     list.append(h('table', { class: 'grid' },
       h('thead', null, h('tr', null, [t('mem.name'), t('common.branch'), t('common.status'), t('mem.membership'), t('common.actions')].map((c) => h('th', null, c)))),

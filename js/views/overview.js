@@ -46,9 +46,9 @@ export async function render(box) {
       box.append(h('h3', null, t('ov.totals')), h('div', { class: 'tiles' }, [...byCur.entries()].map(([cur, v]) =>
         h('div', { class: 'tile wide' },
           h('div', { class: 'tile-label' }, cur),
-          h('div', null, `${t('ov.income')}: ${fmtMoney(v.income, cur)}`),
-          h('div', null, `${t('ov.expense')}: ${fmtMoney(v.expense, cur)}`),
-          h('div', { class: 'tile-value small' }, `${t('ov.balance')}: ${fmtMoney(v.income - v.expense, cur)}`)))));
+          h('div', null, `${t('ov.income')}: `, h('bdi', null, fmtMoney(v.income, cur))),
+          h('div', null, `${t('ov.expense')}: `, h('bdi', null, fmtMoney(v.expense, cur))),
+          h('div', { class: 'tile-value small' }, `${t('ov.balance')}: `, h('bdi', null, fmtMoney(v.income - v.expense, cur)))))));
     }
   }
   return null;

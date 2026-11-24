@@ -90,7 +90,7 @@ export async function render(box) {
         h('td', { 'data-label': t('inv.number'), dir: 'ltr' }, `#${inv.number}`),
         h('td', { 'data-label': t('inv.member') }, names.get(inv.member_id) || t('common.none')),
         h('td', { 'data-label': t('inv.label') }, inv.label),
-        h('td', { 'data-label': t('inv.amount'), dir: 'ltr' }, fmtMoney(inv.amount_minor, inv.currency.trim())),
+        h('td', { 'data-label': t('inv.amount') }, h('bdi', null, fmtMoney(inv.amount_minor, inv.currency.trim()))),
         h('td', { 'data-label': t('inv.dueDate') }, fmtDate(inv.due_date)),
         h('td', { 'data-label': t('common.status') }, badge(t(`inv.status.${st}`), KIND[st])),
         h('td', { class: 'actions', 'data-label': t('common.actions') }, actions));
