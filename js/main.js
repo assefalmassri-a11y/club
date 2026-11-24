@@ -10,6 +10,12 @@ import * as members from './views/members.js';
 import * as invoices from './views/invoices.js';
 import * as events from './views/events.js';
 import * as chat from './views/chat.js';
+import * as ledger from './views/ledger.js';
+import * as doors from './views/doors.js';
+import * as staff from './views/staff.js';
+import * as settings from './views/settings.js';
+import * as reports from './views/reports.js';
+import * as clients from './views/clients.js';
 
 const root = document.getElementById('app');
 document.documentElement.dir = dir();
@@ -18,8 +24,14 @@ const TABS = [
   { id: 'overview', view: overview, roles: ['owner', 'branch_manager', 'staff'] },
   { id: 'members', view: members, roles: ['owner', 'branch_manager', 'staff'] },
   { id: 'invoices', view: invoices, roles: ['owner', 'branch_manager', 'staff'] },
+  { id: 'ledger', view: ledger, roles: ['owner', 'branch_manager'] },
+  { id: 'reports', view: reports, roles: ['owner', 'branch_manager'] },
+  { id: 'clients', view: clients, roles: ['owner', 'branch_manager', 'trainer'] },
   { id: 'events', view: events, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },
+  { id: 'doors', view: doors, roles: ['owner', 'branch_manager'] },
+  { id: 'staff', view: staff, roles: ['owner', 'branch_manager'] },
   { id: 'chat', view: chat, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },
+  { id: 'settings', view: settings, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },
 ];
 
 let currentTab = null;

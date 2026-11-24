@@ -28,10 +28,28 @@ async function addMember() {
   return ok === true;
 }
 
+async function editPlan(p) {
+  const cur = p.currency.trim();
+  const d = decimals(cur);
+  await openForm({
+    title: `${t('mem.editPlan')}: ${p.name}`,
+    fields: [
+      { name: 'name', label: t('mem.planName'), required: true, maxlength: 80, value: p.name },
+      { name: 'price', label: `${t('mem.planPrice')} (${cur})`, type: 'number', required: true, min: '0', step: String(1 / 10 ** d), value: String(p.price_cents / 10 ** d) },
+      { name: 'days', label: t('mem.planDays'), type: 'number', required: true, min: '1', step: '1', value: String(p.duration_days) },
+    ],
+    onSubmit: async (v) => {
+      const minor = Math.round(Number(v.price) * 10 ** d); const days = Number(v.days);
+      if (!Number.isFinite(minor) || minor < 0 || !Number.isInteger(days) || days < 1) throw new Error(t('err.invalid'));
+      const { error } = await sb.from('membership_plans').update({ name: v.name, price_cents: minor, duration_days: days }).eq('id', p.id);
+      if (error) throw error;
+    },
+  });
+}
+
 async function managePlans() {
   const { data: plans, error } = await sb.from('membership_plans').select('id, name, price_cents, currency, duration_days, active, branch_id').order('name');
   if (error) throw error;
-  const lines = (plans || []).map((p) => `${p.name} — ${fmtMoney(p.price_cents, p.currency.trim())} / ${p.duration_days}${p.active ? '' : ' (x)'}`);
   const overlay = h('div', { class: 'overlay' });
   const close = () => overlay.remove();
   const addBtn = button(t('mem.addPlan'), async () => {
@@ -55,7 +73,11 @@ async function managePlans() {
     managePlans().catch((e) => toast(String(e.message || e), 'error'));
   }, 'btn primary');
   overlay.append(h('div', { class: 'modal' }, h('h2', null, t('mem.plans')),
-    lines.length ? h('ul', { class: 'plain' }, lines.map((l) => h('li', null, l))) : h('p', { class: 'muted' }, t('mem.noPlans')),
+    (plans || []).length ? h('div', { class: 'list-simple' }, plans.map((p) => h('div', { class: 'item' },
+      h('span', null, `${p.name} — `, h('bdi', null, fmtMoney(p.price_cents, p.currency.trim())), ` / ${p.duration_days}`, p.active ? null : h('span', { class: 'muted' }, ' (x)')),
+      h('span', { class: 'row gap' },
+        button(t('mem.editPlan'), async () => { await editPlan(p); close(); managePlans().catch((e) => toast(String(e.message || e), 'error')); }, 'btn small'),
+        button(p.active ? t('mem.planToggleOff') : t('mem.planToggleOn'), () => guard(async () => { const { error: e } = await sb.from('membership_plans').update({ active: !p.active }).eq('id', p.id); if (e) throw e; toast(t('mem.planSaved'), 'ok'); close(); await managePlans(); }), 'btn small'))))) : h('p', { class: 'muted' }, t('mem.noPlans')),
     h('div', { class: 'row end' }, button(t('common.close'), close), addBtn)));
   document.body.append(overlay);
 }
@@ -112,13 +134,67 @@ async function showInvite(member) {
   document.body.append(overlay);
 }
 
+async function editMember(member) {
+  const ok = await openForm({
+    title: `${t('mem.edit')}: ${member.full_name}`,
+    fields: [
+      { name: 'name', label: t('mem.name'), required: true, maxlength: 120, value: member.full_name },
+      { name: 'phone', label: t('mem.phone'), type: 'tel', maxlength: 30, dir: 'ltr', value: member.phone || '' },
+      { name: 'email', label: t('mem.email'), type: 'email', maxlength: 120, dir: 'ltr', value: member.email || '' },
+      { name: 'status', label: t('common.status'), type: 'select', required: true, value: member.status, options: ['active', 'frozen', 'expired', 'cancelled'].map((x) => ({ value: x, label: t(`mem.status.${x}`) })) },
+    ],
+    onSubmit: async (v) => {
+      const { error } = await sb.from('members').update({ full_name: v.name, phone: v.phone || null, email: v.email || null, status: v.status }).eq('id', member.id);
+      if (error) throw error;
+    },
+  });
+  if (ok === true) toast(t('mem.saved'), 'ok');
+  return ok === true;
+}
+
+async function manageMembership(member) {
+  const { data, error } = await sb.from('memberships').select('id, status, ends_on').eq('member_id', member.id).in('status', ['active', 'paused']).gte('ends_on', today()).order('ends_on', { ascending: false }).limit(1);
+  if (error) throw error;
+  const cur = data && data[0];
+  if (!cur) { toast(t('mem.noActiveSub'), 'error'); return false; }
+  const opts = cur.status === 'active'
+    ? [{ value: 'paused', label: t('mem.subPause') }, { value: 'cancelled', label: t('mem.subCancel') }]
+    : [{ value: 'active', label: t('mem.subResume') }, { value: 'cancelled', label: t('mem.subCancel') }];
+  const ok = await openForm({
+    title: `${t('mem.manageSub')}: ${member.full_name}`,
+    fields: [{ name: 'action', label: t('mem.subAction'), type: 'select', required: true, options: opts }],
+    onSubmit: async (v) => {
+      const { error: e } = await sb.from('memberships').update({ status: v.action }).eq('id', cur.id);
+      if (e) throw e;
+    },
+  });
+  if (ok === true) toast(t('mem.subDone'), 'ok');
+  return ok === true;
+}
+
+async function assignTrainer(member) {
+  const { data, error } = await sb.rpc('staff_directory', { p_club: state.club.id });
+  if (error) throw error;
+  const trainers = (data || []).filter((r) => r.role === 'trainer' && (!r.branch_id || r.branch_id === member.branch_id));
+  if (!trainers.length) { toast(t('mem.noTrainers'), 'error'); return; }
+  const ok = await openForm({
+    title: `${t('mem.trainer')}: ${member.full_name}`,
+    fields: [{ name: 'trainer', label: t('mem.trainerPick'), type: 'select', required: true, options: trainers.map((r) => ({ value: r.id, label: r.email })) }],
+    onSubmit: async (v) => { const { error: e } = await sb.rpc('assign_trainer', { p_member: member.id, p_trainer_staff: v.trainer }); if (e) throw e; },
+  });
+  if (ok === true) toast(t('mem.trainerDone'), 'ok');
+}
+
 function moreMenu(member, ctx) {
   const overlay = h('div', { class: 'overlay' });
   const run = (fn) => async () => { overlay.remove(); await guard(fn); };
   overlay.append(h('div', { class: 'modal small' }, h('h2', null, member.full_name),
     h('div', { class: 'menu-list' },
+      button(t('mem.edit'), async () => { overlay.remove(); await guard(() => editMember(member)); ctx.rerender(); }, 'btn block'),
+      button(t('mem.manageSub'), async () => { overlay.remove(); await guard(() => manageMembership(member)); ctx.rerender(); }, 'btn block'),
       button(t('mem.card'), run(() => issueCard(member)), 'btn block'),
       button(t('mem.invite'), run(() => showInvite(member)), 'btn block'),
+      button(t('mem.trainer'), run(() => assignTrainer(member)), 'btn block'),
       button(t('mem.chat'), run(async () => {
         const { data: id, error } = await sb.rpc('open_support_conversation', { p_member: member.id });
         if (error) throw error;

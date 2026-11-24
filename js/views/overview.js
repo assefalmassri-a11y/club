@@ -1,6 +1,6 @@
 import { sb } from '../supa.js';
 import { state, scoped, canManage } from '../state.js';
-import { h, fmtMoney, today } from '../dom.js';
+import { h, fmtMoney, fmtDate, fmtDateTime, today, addDays } from '../dom.js';
 import { t } from '../i18n.js';
 import { icon } from '../icons.js';
 
@@ -30,6 +30,17 @@ export async function render(box) {
     tile(t('ov.members'), activeMembers, 'members'),
     tile(t('ov.unpaid'), unpaid, 'wallet', 'warn'),
     tile(t('ov.overdue'), overdue, 'warn', 'bad')));
+
+  const [{ data: exp }, { data: rec }] = await Promise.all([
+    scoped(sb.from('memberships').select('member_id, ends_on').in('status', ['active']).gte('ends_on', today()).lte('ends_on', addDays(today(), 7)).order('ends_on').limit(8)),
+    scoped(sb.from('checkins').select('member_id, checked_in_at').order('checked_in_at', { ascending: false }).limit(8), 'branch_id'),
+  ]);
+  const ids = [...new Set([...(exp || []), ...(rec || [])].map((r) => r.member_id))];
+  const names = new Map();
+  if (ids.length) { const { data: ms } = await sb.from('members').select('id, full_name').in('id', ids); for (const m of ms || []) names.set(m.id, m.full_name); }
+  const col = (title, rows, right) => h('div', null, h('h3', null, title),
+    h('div', { class: 'list-simple' }, rows && rows.length ? rows.map((r) => h('div', { class: 'item' }, h('span', null, names.get(r.member_id) || t('common.none')), h('span', { class: 'muted small' }, right(r)))) : h('p', { class: 'muted' }, t('ov.none'))));
+  box.append(h('div', { class: 'two-col' }, col(t('ov.expiring'), exp, (r) => fmtDate(r.ends_on)), col(t('ov.recent'), rec, (r) => fmtDateTime(r.checked_in_at))));
 
   if (canManage()) {
     const { data, error } = await scoped(sb.from('ledger_totals').select('*'));

@@ -5,6 +5,39 @@ import { t } from '../i18n.js';
 
 function branchName(id) { const b = state.branches.find((x) => x.id === id); return b ? b.name : t('common.none'); }
 
+async function openAttendance(ev) {
+  const { data: regs, error } = await sb.from('event_registrations').select('member_id, status, attended_at').eq('event_id', ev.id).neq('status', 'cancelled').order('queue_no');
+  if (error) throw error;
+  const ids = (regs || []).map((r) => r.member_id);
+  const names = new Map();
+  if (ids.length) { const { data: ms } = await sb.from('members').select('id, full_name').in('id', ids); for (const m of ms || []) names.set(m.id, m.full_name); }
+  const overlay = h('div', { class: 'overlay' });
+  const body = h('div', { class: 'list-simple' });
+  const draw = (rows) => {
+    clear(body);
+    if (!rows.length) { body.append(h('p', { class: 'muted' }, t('ev.noRegs'))); return; }
+    for (const r of rows) {
+      body.append(h('div', { class: 'item' },
+        h('span', null, names.get(r.member_id) || t('common.none'), ' ', badge(t(`ev.reg.${r.status}`), r.status === 'registered' ? 'ok' : 'warn')),
+        h('span', { class: 'row gap' },
+          button(t('ev.present'), () => mark(r, true), r.attended_at ? 'btn small primary' : 'btn small'),
+          button(t('ev.absent'), () => mark(r, false), 'btn small'))));
+    }
+  };
+  async function mark(r, attended) {
+    await guard(async () => {
+      const { error: e } = await sb.rpc('mark_attendance', { p_event_id: ev.id, p_member_id: r.member_id, p_attended: attended });
+      if (e) throw e;
+      r.attended_at = attended ? new Date().toISOString() : null;
+      draw(regs);
+    });
+  }
+  draw(regs || []);
+  overlay.append(h('div', { class: 'modal' }, h('h2', null, `${t('ev.attTitle')}: ${ev.title}`), body, h('div', { class: 'row end' }, button(t('common.close'), () => overlay.remove(), 'btn primary'))));
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  document.body.append(overlay);
+}
+
 export async function render(box) {
   const upcoming = h('input', { type: 'checkbox', checked: true, id: 'ev-upcoming' });
   const list = h('div', { class: 'table-wrap' });
@@ -56,6 +89,7 @@ export async function render(box) {
       h('td', { 'data-label': t('ev.capacity') }, String(ev.capacity)),
       h('td', { 'data-label': t('common.status') }, ev.status === 'cancelled' ? badge(t('ev.cancelled'), 'bad') : badge(t('ev.scheduled'), 'ok')),
       h('td', { class: 'actions', 'data-label': t('common.actions') },
+        ev.status !== 'cancelled' ? button(t('ev.attendance'), () => guard(() => openAttendance(ev)), 'btn small') : null,
         ev.status === 'scheduled' ? button(t('ev.cancel'), async () => {
           const ok = await openForm({
             title: `${t('ev.cancel')}: ${ev.title}`,
