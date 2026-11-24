@@ -1,5 +1,6 @@
 import { sb } from './supa.js';
 import { gate, handleRecovery } from './auth.js';
+import { installErrorLog } from './errlog.js';
 import { state, canManage, isFrontDesk } from './state.js';
 import { h, clear, spinner, toast, errText, openForm } from './dom.js';
 import { t, initLang } from './i18n.js';
@@ -16,11 +17,16 @@ import * as staff from './views/staff.js';
 import * as settings from './views/settings.js';
 import * as reports from './views/reports.js';
 import * as clients from './views/clients.js';
+import * as coach from './views/coach.js';
+import * as analytics from './views/analytics.js';
+import * as shop from './views/shop.js';
+import * as equipment from './views/equipment.js';
 import * as reception from './views/reception.js';
 import * as audit from './views/audit.js';
 
 const root = document.getElementById('app');
 initLang();
+installErrorLog('staff');
 
 const TABS = [
   { id: 'overview', view: overview, roles: ['owner', 'branch_manager', 'staff'] },
@@ -29,8 +35,12 @@ const TABS = [
   { id: 'invoices', view: invoices, roles: ['owner', 'branch_manager', 'staff'] },
   { id: 'ledger', view: ledger, roles: ['owner', 'branch_manager'] },
   { id: 'reports', view: reports, roles: ['owner', 'branch_manager'] },
-  { id: 'clients', view: clients, roles: ['owner', 'branch_manager', 'trainer'] },
+  { id: 'coach', view: coach, roles: ['trainer'] },
+  { id: 'clients', view: clients, roles: ['owner', 'branch_manager'] },
   { id: 'events', view: events, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },
+  { id: 'analytics', view: analytics, roles: ['owner', 'branch_manager'] },
+  { id: 'shop', view: shop, roles: ['owner', 'branch_manager', 'staff'] },
+  { id: 'equipment', view: equipment, roles: ['owner', 'branch_manager', 'staff'] },
   { id: 'doors', view: doors, roles: ['owner', 'branch_manager'] },
   { id: 'staff', view: staff, roles: ['owner', 'branch_manager'] },
   { id: 'chat', view: chat, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },

@@ -138,3 +138,10 @@ ul.plain{list-style:none;padding:0;margin:.5rem 0}ul.plain li{padding:.5rem 0;bo
   .print-overlay .row{display:none}
   .id-card{width:85.6mm;max-width:none;margin:0;break-inside:avoid}
 }
+
+.receipt .kv{display:flex;justify-content:space-between;gap:1rem;padding:.25rem 0;text-align:start}
+.avatar{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--surface-2);color:var(--mut);font-weight:700;overflow:hidden;flex:none}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar.sm{width:34px;height:34px}.avatar.md{width:44px;height:44px}.avatar.lg{width:56px;height:56px;font-size:1.3rem}
+.wchart{width:100%;height:auto;display:block}.wline{fill:none;stroke:var(--pri-600);stroke-width:2}.wdot{fill:var(--pri-600)}
+.plan-body{white-space:pre-wrap;margin-top:.4rem}

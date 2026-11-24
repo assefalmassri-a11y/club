@@ -27,6 +27,16 @@ export async function render(box) {
         h('td', { 'data-label': t('aud.target'), class: 'ltr' }, short(r.target_id)),
         h('td', { 'data-label': t('aud.details'), class: 'muted small ltr' }, r.details ? JSON.stringify(r.details).slice(0, 140) : ''))))));
   }
+  const errBox = h('div', { class: 'list-simple' });
+  box.append(h('h3', { class: 'section' }, t('aud.errors')), errBox);
+  async function loadErrors() {
+    const { data, error } = await sb.from('client_errors').select('id, app, message, page, created_at').eq('club_id', state.club.id).order('created_at', { ascending: false }).limit(20);
+    if (error) throw error;
+    clear(errBox);
+    if (!(data || []).length) { errBox.append(h('p', { class: 'muted' }, t('aud.noErrors'))); return; }
+    for (const r of data) errBox.append(h('div', { class: 'item' }, h('span', { class: 'ltr small' }, `${r.app} · ${r.message}`), h('span', { class: 'muted small' }, fmtDateTime(r.created_at))));
+  }
+  loadErrors().catch(() => {});
   sel.addEventListener('change', () => load().catch(() => {}));
   await load();
   return null;

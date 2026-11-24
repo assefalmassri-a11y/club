@@ -13,3 +13,6 @@
 .card .row{justify-content:space-between}
 .hero{margin-bottom:1rem}
 .scan-box.off{background:var(--surface-2);border:1px dashed var(--bd);aspect-ratio:2/1}
+.badges{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
+.badge-chip{padding:.35rem .7rem;border-radius:999px;background:var(--surface-2);color:var(--mut);font-size:.85rem}
+.badge-chip.got{background:var(--pri-50);color:var(--pri-600);font-weight:700}

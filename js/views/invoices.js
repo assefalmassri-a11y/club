@@ -42,6 +42,24 @@ function statusOf(inv) {
 }
 const KIND = { issued: 'warn', paid: 'ok', void: '', overdue: 'bad' };
 
+function showReceipt(inv, memberName) {
+  const overlay = h('div', { class: 'overlay print-overlay' });
+  const cur = String(inv.currency).trim();
+  const card = h('div', { class: 'id-card receipt' },
+    h('div', { class: 'id-club' }, state.club.name),
+    h('div', { class: 'muted' }, t('inv.receipt')),
+    h('div', { class: 'id-name' }, memberName || ''),
+    h('div', { class: 'kv' }, h('span', { class: 'muted' }, t('inv.number')), h('strong', { class: 'ltr' }, `#${inv.number}`)),
+    h('div', { class: 'kv' }, h('span', { class: 'muted' }, t('inv.label')), h('strong', null, inv.label)),
+    h('div', { class: 'kv' }, h('span', { class: 'muted' }, t('inv.paidOn')), h('strong', null, fmtDate(inv.paid_on))),
+    h('div', { class: 'kv' }, h('span', { class: 'muted' }, t('inv.method')), h('strong', null, inv.payment_method ? t(`inv.m.${inv.payment_method}`) : t('common.none'))),
+    h('div', { class: 'id-no' }, h('bdi', null, fmtMoney(inv.amount_minor, cur))));
+  overlay.append(h('div', { class: 'modal small' }, card,
+    h('div', { class: 'row end' }, button(t('common.close'), () => overlay.remove()), button(t('mem.print'), () => window.print(), 'btn primary'))));
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  document.body.append(overlay);
+}
+
 export async function render(box) {
   const filter = h('select', { 'aria-label': t('common.status') },
     [['', t('common.all')], ['issued', t('inv.status.issued')], ['paid', t('inv.status.paid')], ['void', t('inv.status.void')]]
@@ -52,7 +70,7 @@ export async function render(box) {
 
   async function load() {
     clear(list);
-    let q = scoped(sb.from('invoices').select('id, number, member_id, label, amount_minor, currency, due_date, issue_date, status, paid_on').order('number', { ascending: false }).limit(100));
+    let q = scoped(sb.from('invoices').select('id, number, member_id, label, amount_minor, currency, due_date, issue_date, status, paid_on, payment_method').order('number', { ascending: false }).limit(100));
     if (filter.value) q = q.eq('status', filter.value);
     const { data, error } = await q;
     if (error) throw error;
@@ -66,13 +84,19 @@ export async function render(box) {
       const st = statusOf(inv);
       const actions = [];
       if (inv.status === 'issued') {
-        actions.push(button(t('inv.markPaid'), () => guard(async () => {
-          const { error: e } = await sb.rpc('mark_invoice_paid', { p_invoice_id: inv.id, p_paid_on: today() });
-          if (e) throw e;
-          toast(t('inv.paid'), 'ok');
-          await load();
-        }), 'btn small primary'));
+        actions.push(button(t('inv.markPaid'), async () => {
+          const ok = await openForm({
+            title: `${t('inv.markPaid')} #${inv.number}`,
+            fields: [{ name: 'method', label: t('inv.method'), type: 'select', required: true, value: 'cash', options: ['cash', 'transfer', 'card', 'other'].map((m) => ({ value: m, label: t(`inv.m.${m}`) })) }],
+            onSubmit: async (v) => {
+              const { error: e } = await sb.rpc('mark_invoice_paid', { p_invoice_id: inv.id, p_paid_on: today(), p_method: v.method });
+              if (e) throw e;
+            },
+          });
+          if (ok === true) { toast(t('inv.paid'), 'ok'); await load(); }
+        }, 'btn small primary'));
       }
+      if (inv.status === 'paid') actions.push(button(t('inv.receipt'), () => showReceipt(inv, names.get(inv.member_id)), 'btn small'));
       if (canManage() && inv.status !== 'void') {
         actions.push(button(t('inv.void'), async () => {
           const ok = await openForm({
@@ -103,4 +127,26 @@ export async function render(box) {
   filter.addEventListener('change', () => guard(load));
   await load();
   return null;
+}
+
+// Split a total into N monthly invoices (atomic in the database; the last one absorbs the remainder).
+export async function openInstallments({ memberId, memberName }) {
+  const cur = currency();
+  const ok = await openForm({
+    title: `${t('inst.title')}: ${memberName}`,
+    fields: [
+      { name: 'label', label: t('inv.label'), required: true, maxlength: 120 },
+      { name: 'total', label: `${t('inst.total')} (${cur})`, required: true, inputmode: 'decimal', dir: 'ltr' },
+      { name: 'count', label: t('inst.count'), required: true, inputmode: 'numeric', dir: 'ltr', value: '3' },
+      { name: 'first', label: t('inst.first'), type: 'date', required: true, value: endOfMonth(today()) },
+    ],
+    onSubmit: async (v) => {
+      const total = toMinor(v.total, cur); const n = Number(v.count);
+      if (total === null || !Number.isInteger(n) || n < 2 || n > 24) throw new Error(t('err.invalid'));
+      const { error } = await sb.rpc('create_installments', { p_member: memberId, p_label: v.label, p_total: total, p_currency: cur, p_count: n, p_first_due: v.first });
+      if (error) throw error;
+    },
+  });
+  if (ok === true) toast(t('inst.done'), 'ok');
+  return ok === true;
 }

@@ -2,9 +2,12 @@ import { calendarTerm } from '../billing.js';
 import { code39 } from '../barcode.js';
 import { sb } from '../supa.js';
 import { state, scoped, canManage } from '../state.js';
-import { h, clear, badge, button, openForm, toast, guard, fmtDate, fmtMoney, toMinor, today, addDays, decimals } from '../dom.js';
+import { h, clear, badge, button, openForm, toast, guard, fmtDate, fmtMoney, toMinor, today, addDays, decimals, confirmBox } from '../dom.js';
 import { t } from '../i18n.js';
-import { openNewInvoice } from './invoices.js';
+import { openNewInvoice, openInstallments } from './invoices.js';
+import { openCoupons } from './coupons.js';
+import { openTracking, editPlan as editWorkoutPlan } from './tracking.js';
+import { avatar, pickPhoto, uploadPhoto } from '../photo.js';
 
 const STATUS_KIND = { active: 'ok', frozen: 'warn', expired: 'bad', cancelled: 'bad' };
 
@@ -100,12 +103,16 @@ async function subscribe(member) {
     fields: [
       { name: 'plan', label: t('mem.plan'), type: 'select', required: true, options: usable.map((p) => ({ value: p.id, label: `${p.name} — ${fmtMoney(p.price_cents, p.currency.trim())}${p.calendar ? ` (${t('mem.modeCalendar')})` : ''}` })) },
       { name: 'start', label: t('mem.startsOn'), type: 'date', required: true, value: defStart },
+      { name: 'coupon', label: t('cp.optional'), maxlength: 24, dir: 'ltr' },
     ],
     onSubmit: async (v) => {
       const plan = usable.find((p) => p.id === v.plan);
       if (!plan) throw new Error(t('err.invalid'));
       let ends = addDays(v.start, plan.duration_days - 1); let price = plan.price_cents;
       if (plan.calendar) { const c = calendarTerm(v.start, plan.price_cents); ends = c.ends_on; price = c.price_minor; }
+      let pct = member.discount_pct || 0;
+      if (v.coupon) { const { data: cp, error: ce } = await sb.rpc('redeem_coupon', { p_club: state.club.id, p_code: v.coupon, p_member: member.id }); if (ce) throw ce; pct = Math.max(pct, Number(cp) || 0); }
+      if (pct) price = Math.round(price * (100 - pct) / 100);
       const { error: e } = await sb.from('memberships').insert({
         club_id: state.club.id, member_id: member.id, plan_id: plan.id, branch_id: member.branch_id,
         starts_on: v.start, ends_on: ends,
@@ -152,9 +159,16 @@ async function editMember(member) {
       { name: 'phone', label: t('mem.phone'), type: 'tel', maxlength: 30, dir: 'ltr', value: member.phone || '' },
       { name: 'email', label: t('mem.email'), type: 'email', maxlength: 120, dir: 'ltr', value: member.email || '' },
       { name: 'status', label: t('common.status'), type: 'select', required: true, value: member.status, options: ['active', 'frozen', 'expired', 'cancelled'].map((x) => ({ value: x, label: t(`mem.status.${x}`) })) },
+      ...(canManage() ? [{ name: 'discount', label: t('mem.discount'), type: 'number', min: '0', max: '100', step: '1', value: String(member.discount_pct || 0) }] : []),
     ],
     onSubmit: async (v) => {
-      const { error } = await sb.from('members').update({ full_name: v.name, phone: v.phone || null, email: v.email || null, status: v.status }).eq('id', member.id);
+      const patch = { full_name: v.name, phone: v.phone || null, email: v.email || null, status: v.status };
+      if (canManage()) {
+        const d = Number(v.discount);
+        if (!Number.isInteger(d) || d < 0 || d > 100) throw new Error(t('err.invalid'));
+        patch.discount_pct = d;
+      }
+      const { error } = await sb.from('members').update(patch).eq('id', member.id);
       if (error) throw error;
     },
   });
@@ -195,6 +209,28 @@ async function assignTrainer(member) {
   if (ok === true) toast(t('mem.trainerDone'), 'ok');
 }
 
+async function editNotes(member) {
+  const { data } = await sb.from('member_notes').select('note').eq('member_id', member.id).maybeSingle();
+  const ok = await openForm({
+    title: `${t('mem.notes')}: ${member.full_name}`,
+    fields: [{ name: 'note', label: t('mem.notesHelp'), type: 'textarea', maxlength: 1000, value: data ? data.note : '' }],
+    onSubmit: async (v) => {
+      const txt = (v.note || '').trim();
+      if (!txt) { const { error } = await sb.from('member_notes').delete().eq('member_id', member.id); if (error) throw error; return; }
+      const { error } = await sb.from('member_notes').upsert({ member_id: member.id, club_id: state.club.id, branch_id: member.branch_id, note: txt, updated_by: state.session.user.id, updated_at: new Date().toISOString() });
+      if (error) throw error;
+    },
+  });
+  if (ok === true) toast(t('mem.saved'), 'ok');
+}
+
+async function anonymize(member) {
+  if (!(await confirmBox(t('mem.anonConfirm', { name: member.full_name })))) return;
+  const { error } = await sb.rpc('anonymize_member', { p_member: member.id });
+  if (error) throw error;
+  toast(t('mem.anonDone'), 'ok');
+}
+
 function printCard(member) {
   const overlay = h('div', { class: 'overlay print-overlay' });
   const card = h('div', { class: 'id-card' },
@@ -215,7 +251,13 @@ function moreMenu(member, ctx) {
     h('div', { class: 'menu-list' },
       button(t('mem.edit'), async () => { overlay.remove(); await guard(() => editMember(member)); ctx.rerender(); }, 'btn block'),
       button(t('mem.manageSub'), async () => { overlay.remove(); await guard(() => manageMembership(member)); ctx.rerender(); }, 'btn block'),
+      button(t('inst.title'), run(() => openInstallments({ memberId: member.id, memberName: member.full_name })), 'btn block'),
       button(t('mem.card'), run(() => issueCard(member)), 'btn block'),
+      button(t('mem.notes'), run(() => editNotes(member)), 'btn block'),
+      button(t('mem.photo'), run(async () => { const f = await pickPhoto(); if (!f) return; await uploadPhoto(state.club.id, member.id, f); toast(t('mem.photoDone'), 'ok'); ctx.rerender(); }), 'btn block'),
+      button(t('trk.title'), run(() => openTracking(member)), 'btn block'),
+      canManage() ? button(t('plan.title'), run(() => editWorkoutPlan(member)), 'btn block') : null,
+      canManage() ? button(t('mem.anon'), async () => { overlay.remove(); await guard(() => anonymize(member)); ctx.rerender(); }, 'btn block') : null,
       button(t('mem.printCard'), () => { overlay.remove(); printCard(member); }, 'btn block'),
       button(t('mem.invite'), run(() => showInvite(member)), 'btn block'),
       button(t('mem.trainer'), run(() => assignTrainer(member)), 'btn block'),
@@ -237,12 +279,13 @@ export async function render(box, ctx) {
     h('h2', null, t('mem.title')),
     h('div', { class: 'row gap' }, search,
       canManage() ? button(t('mem.plans'), () => guard(managePlans)) : null,
+      canManage() ? button(t('cp.title'), () => guard(openCoupons)) : null,
       button(t('mem.add'), async () => { if (await addMember()) load(); }, 'btn primary')));
   box.append(header, list);
 
   async function load() {
     clear(list);
-    let q = scoped(sb.from('members').select('id, member_no, full_name, phone, email, status, branch_id').order('full_name').limit(100));
+    let q = scoped(sb.from('members').select('id, member_no, full_name, phone, email, status, branch_id, discount_pct, photo_path').order('full_name').limit(100));
     const term = search.value.trim().replace(/[%_\\,()]/g, ' ');
     if (/^\d{1,9}$/.test(term)) q = q.or(`member_no.eq.${term},phone.ilike.%${term}%`);
     else if (term) q = q.ilike('full_name', `%${term}%`);
@@ -257,7 +300,7 @@ export async function render(box, ctx) {
     for (const r of ms || []) if (!until.has(r.member_id)) until.set(r.member_id, r.ends_on);
 
     const body = members.map((m) => h('tr', null,
-      h('td', { 'data-label': t('mem.name') }, h('strong', null, m.full_name), h('div', { class: 'muted small ltr' }, `#${m.member_no}${m.phone ? ` · ${m.phone}` : ''}`)),
+      h('td', { 'data-label': t('mem.name') }, h('div', { class: 'row gap' }, avatar(m.photo_path, m.full_name, 'sm'), h('div', null, h('strong', null, m.full_name), h('div', { class: 'muted small ltr' }, `#${m.member_no}${m.phone ? ` · ${m.phone}` : ''}`)))),
       h('td', { 'data-label': t('common.branch') }, branchName(m.branch_id)),
       h('td', { 'data-label': t('common.status') }, badge(t(`mem.status.${m.status}`), STATUS_KIND[m.status])),
       h('td', { 'data-label': t('mem.membership') }, until.has(m.id) ? `${t('mem.until')} ${fmtDate(until.get(m.id))}` : h('span', { class: 'muted' }, t('mem.noMembership'))),

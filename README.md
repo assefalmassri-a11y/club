@@ -50,3 +50,33 @@ Plan type "Calendar month": membership ends on the last day of the month; the fi
 - Forgot password: link on the sign-in screen. REQUIRED once in Supabase Dashboard → Authentication → URL Configuration: set Site URL to https://assefalmassri-a11y.github.io/club/ and add https://assefalmassri-a11y.github.io/club/ and .../club/member/ to Redirect URLs, otherwise the email link will not return to the app.
 - Home (owner/manager): alerts for lapsed this week, no visit in 14 days, overdue invoices.
 - Events: "Repeat weekly" creates the same class for N weeks (registration, capacity and waiting list already exist).
+
+## Receipts, discounts, freeze, notes, privacy, daily report, error log
+- Marking an invoice paid asks for the payment method (cash/transfer/card/other); paid invoices have a printable receipt.
+- Standing member discount (%) in Edit member (owner/manager only, audited). Applied to subscriptions and to auto renewal invoices.
+- Freeze: pausing a membership and resuming it extends the end date by the days it was paused.
+- Staff-only notes per member (injury, allergy…); the member cannot read them.
+- Privacy: member app → "Privacy and my data" with a deletion request. Owner/manager sees requests on Home and runs "Anonymize member" (name/phone/email erased, membership cancelled; invoices and ledger are kept without a name).
+- Reports → "Daily report": collections by payment method, income/expense, visits, new members; printable.
+- Audit tab (owner): app errors reported by clients (last 30 days).
+
+## Phase 13
+- Member photo: private bucket `member-photos` (`<club>/<member>.jpg`, resized client-side to 512px JPEG). Staff upload from the member "More" menu; shown in the members list, reception and the member app.
+- Measurements and workouts: tables `member_measurements`, `workout_logs`. Members log their own (app tab "Body"); branch staff and the assigned trainer read.
+- Trainer payroll: `trainer_rates`, RPCs `set_trainer_rate` / `trainer_payroll` (owner + MFA). Staff tab > "Trainer payroll"; events now take a trainer.
+- Exchange rate: `fx_rates`, RPC `set_fx_rate` (owner). Settings > Exchange rate; Overview shows an approximate combined balance when rates exist.
+
+## Phase 14
+- Coach workspace (trainer role): own classes with attendance, own assigned clients (measurements, workout plan, chat).
+- Workout plans: `workout_plans` (one active per member, history kept) via RPC `save_workout_plan` (assigned trainer or owner/manager). Members see the plan in the Body tab.
+- Profit & loss: Reports > "Profit & loss" (per month, per currency, CSV + print).
+- Self-service freeze: member requests in the app; staff approve/reject on the Overview (RPC `decide_freeze` pauses the membership). Resuming stays with staff (existing manage-subscription flow).
+- Fixes: `trainer_payroll` return types; audit domains extended (fx, payroll, freeze, plan).
+
+## Phase 15
+- Trainer data scope tightened in the database: trainers read only assigned/registered members (`private.can_read_member`), their own events' registrations; no memberships/checkins/cards.
+- Resume requests (`request_resume`; `decide_freeze` handles both kinds).
+- Payroll payment: `pay_trainer_month` records an expense in the ledger (once per trainer/month, `payroll_payments`); "Pay" button in Trainer payroll.
+
+## Phase 16
+Analytics (staff), coupons, installments, shop/POS, equipment register, personal-training booking (trainer availability + member booking), class ratings, achievements + opt-in leaderboard, monthly reports (cron `monthly-reports`, daily 06:30 UTC, acts on day 1 per club timezone). Waitlist for classes already existed (`register_for_event` / `promote_waitlist`).

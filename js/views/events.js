@@ -5,7 +5,7 @@ import { t } from '../i18n.js';
 
 function branchName(id) { const b = state.branches.find((x) => x.id === id); return b ? b.name : t('common.none'); }
 
-async function openAttendance(ev) {
+export async function openAttendance(ev) {
   const { data: regs, error } = await sb.from('event_registrations').select('member_id, status, attended_at').eq('event_id', ev.id).neq('status', 'cancelled').order('queue_no');
   if (error) throw error;
   const ids = (regs || []).map((r) => r.member_id);
@@ -48,11 +48,14 @@ export async function render(box) {
       canCreate ? button(t('ev.new'), async () => { if (await guard(createEvent)) load(); }, 'btn primary') : null)), list);
 
   async function createEvent() {
+    let trainers = [];
+    try { const { data } = await sb.rpc('staff_directory', { p_club: state.club.id }); trainers = (data || []).filter((r) => r.role === 'trainer'); } catch (_) { /* optional */ }
     const ok = await openForm({
       title: t('ev.new'),
       fields: [
         { name: 'branch', label: t('common.branch'), type: 'select', required: true, options: state.branches.map((b) => ({ value: b.id, label: b.name })), value: state.branchId || (state.branches[0] && state.branches[0].id) },
         { name: 'title', label: t('ev.name'), required: true, maxlength: 120 },
+        { name: 'trainer', label: t('ev.trainer'), type: 'select', options: [{ value: '', label: t('common.none') }, ...trainers.map((r) => ({ value: r.id, label: r.email }))], value: '' },
         { name: 'desc', label: t('ev.desc'), type: 'textarea', maxlength: 1000 },
         { name: 'starts', label: t('ev.starts'), type: 'datetime-local', required: true },
         { name: 'ends', label: t('ev.ends'), type: 'datetime-local', required: true },
@@ -70,7 +73,7 @@ export async function render(box) {
           const s2 = new Date(starts); s2.setDate(s2.getDate() + 7 * i); // setDate keeps the local clock time across DST changes
           const e2 = new Date(ends); e2.setDate(e2.getDate() + 7 * i);
           const { error } = await sb.rpc('create_event', {
-            p_branch_id: v.branch, p_title: v.title, p_description: v.desc || null, p_trainer_staff_id: null,
+            p_branch_id: v.branch, p_title: v.title, p_description: v.desc || null, p_trainer_staff_id: v.trainer || null,
             p_starts_at: s2.toISOString(), p_ends_at: e2.toISOString(), p_capacity: cap,
           });
           if (error) throw new Error(i ? `${t('ev.partial', { n: i })}: ${error.message}` : error.message);

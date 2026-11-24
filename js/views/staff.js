@@ -2,6 +2,7 @@ import { sb } from '../supa.js';
 import { state } from '../state.js';
 import { h, clear, badge, button, openForm, toast, guard, confirmBox } from '../dom.js';
 import { t } from '../i18n.js';
+import { openPayroll } from './payroll.js';
 
 function branchName(id) { const b = state.branches.find((x) => x.id === id); return b ? b.name : t('common.none'); }
 
@@ -9,7 +10,7 @@ export async function render(box) {
   const list = h('div', { class: 'table-wrap' });
   const isOwner = state.role === 'owner';
   box.append(h('div', { class: 'row between wrap' }, h('h2', null, t('staff.title')),
-    isOwner ? button(t('staff.add'), async () => { if (await guard(addStaff)) load(); }, 'btn primary') : null), list);
+    isOwner ? h('div', { class: 'row gap' }, button(t('pay.title'), () => guard(openPayroll)), button(t('staff.add'), async () => { if (await guard(addStaff)) load(); }, 'btn primary')) : null), list);
 
   async function addStaff() {
     const ok = await openForm({

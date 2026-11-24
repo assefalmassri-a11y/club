@@ -4,6 +4,7 @@ import { h, clear, spinner, toast, errText } from '../../js/dom.js';
 import { t, initLang } from '../../js/i18n.js';
 import { icon } from '../../js/icons.js';
 import { showLogin, handleRecovery } from '../../js/auth.js';
+import { installErrorLog } from '../../js/errlog.js';
 import { me } from './ctx.js';
 import * as home from './home.js';
 import * as scan from './scan.js';
@@ -11,16 +12,23 @@ import * as events from './events.js';
 import * as invoices from './invoices.js';
 import * as chat from './chat.js';
 import * as activity from './activity.js';
+import * as body from './body.js';
+import * as pt from './pt.js';
+import * as board from './board.js';
 
 initLang();
+installErrorLog('member');
 const root = document.getElementById('app');
 const TABS = [
   { id: 'home', ic: 'overview', view: home },
   { id: 'scan', ic: 'qr', view: scan },
   { id: 'events', ic: 'events', view: events },
+  { id: 'chat', ic: 'chat', view: chat },
   { id: 'invoices', ic: 'invoices', view: invoices },
   { id: 'activity', ic: 'clock', view: activity },
-  { id: 'chat', ic: 'chat', view: chat },
+  { id: 'body', ic: 'members', view: body },
+  { id: 'pt', ic: 'clients', view: pt },
+  { id: 'board', ic: 'reports', view: board },
 ];
 let nav; let content; let cleanup = null;
 
@@ -28,6 +36,8 @@ async function show(id) {
   if (typeof cleanup === 'function') { try { cleanup(); } catch (_) { /* ignore */ } }
   cleanup = null;
   for (const b of nav.querySelectorAll('button')) b.classList.toggle('active', b.dataset.tab === id);
+  const cur = nav.querySelector(`[data-tab="${id}"]`); const mb = nav.querySelector('[data-more]');
+  if (mb) mb.classList.toggle('active', !!cur && cur.classList.contains('more-item'));
   clear(content); content.append(spinner());
   const box = h('div', { class: 'view' });
   try { cleanup = await TABS.find((x) => x.id === id).view.render(box, { goto: show }); } catch (e) { box.append(h('div', { class: 'form-error' }, errText(e))); }
@@ -36,7 +46,16 @@ async function show(id) {
 
 function shell() {
   clear(root);
-  nav = h('nav', { class: 'nav', 'aria-label': 'main' }, TABS.map((tb) => h('button', { type: 'button', 'data-tab': tb.id, onClick: () => show(tb.id) }, icon(tb.ic, 20), h('span', null, t(`m.tab.${tb.id}`)))));
+  const MAIN = 4;
+  const openMore = () => {
+    const overlay = h('div', { class: 'overlay' });
+    overlay.append(h('div', { class: 'modal small' }, h('div', { class: 'menu-list' }, TABS.slice(MAIN).map((tb) => h('button', { type: 'button', class: 'btn block', onClick: () => { overlay.remove(); show(tb.id); } }, t(`m.tab.${tb.id}`)))),
+      h('div', { class: 'row end' }, h('button', { type: 'button', class: 'btn', onClick: () => overlay.remove() }, t('common.close')))));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    document.body.append(overlay);
+  };
+  nav = h('nav', { class: 'nav', 'aria-label': 'main' }, ...TABS.map((tb, i) => h('button', { type: 'button', 'data-tab': tb.id, class: i >= MAIN ? 'more-item' : '', onClick: () => show(tb.id) }, icon(tb.ic, 20), h('span', null, t(`m.tab.${tb.id}`)))),
+    h('button', { type: 'button', class: 'more-btn', 'data-more': '1', onClick: openMore }, icon('more', 20), h('span', null, t('tab.more'))));
   content = h('main', { class: 'content' });
   const out = h('button', { type: 'button', class: 'btn ghost', 'aria-label': t('auth.signout') }, icon('logout', 18), h('span', { class: 'lbl' }, t('auth.signout')));
   out.addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); });
@@ -67,7 +86,7 @@ function showLink() {
 }
 
 async function loadMe() {
-  const { data: ms, error } = await sb.from('members').select('id, member_no, club_id, branch_id, full_name, status').order('created_at');
+  const { data: ms, error } = await sb.from('members').select('id, member_no, club_id, branch_id, full_name, status, photo_path').order('created_at');
   if (error) throw error;
   if (!ms || !ms.length) return false;
   me.member = ms[0];
