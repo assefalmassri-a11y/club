@@ -30,6 +30,7 @@ export async function render(box, ctx) {
         h('div', { class: 'row gap wrap' },
           button(t('plat.edit'), () => guard(() => editSubscription(r, planCodes, again)), 'btn small'),
           button(t('plat.details'), () => guard(() => showDetail(r)), 'btn small'),
+          button(t('plat.look'), () => guard(() => editLook(r, again)), 'btn small'),
           button(t('plat.delete'), () => guard(() => deleteClub(r, again)), 'btn small ghost'))])),
     h('div', { class: 'row between wrap' }, h('h3', { class: 'section' }, t('plat.plans')), button(t('plat.addPlan'), () => guard(() => editPlan(null, again)), 'btn small')),
     table([t('plat.planCode'), t('mem.planName'), t('plat.maxBranches'), t('plat.maxMembers'), t('inv.amount'), t('common.status'), ''],
@@ -41,8 +42,7 @@ export async function render(box, ctx) {
     h('div', { class: 'row gap wrap' },
       (branding.palette || []).map((c) => { const sw = h('span', { class: 'swatch', title: c }); sw.style.background = c; return sw; }),
       badge(`${t('plat.allowCustom')}: ${branding.allow_custom ? t('plat.on') : t('plat.off')}`, branding.allow_custom ? 'ok' : ''),
-      badge(`${t('plat.allowLogo')}: ${branding.allow_logo ? t('plat.on') : t('plat.off')}`, branding.allow_logo ? 'ok' : ''),
-      badge(`${t('plat.allowTheme')}: ${branding.allow_theme ? t('plat.on') : t('plat.off')}`, branding.allow_theme ? 'ok' : '')),
+      badge(`${t('plat.allowLogo')}: ${branding.allow_logo ? t('plat.on') : t('plat.off')}`, branding.allow_logo ? 'ok' : '')),
     h('div', { class: 'row between wrap' }, h('h3', { class: 'section' }, t('plat.admins')), button(t('plat.addAdmin'), () => guard(() => addAdmin(again)), 'btn small')),
     table([t('mem.email'), t('common.date'), ''],
       (admins || []).map((a) => [h('span', { class: 'ltr' }, a.email), fmtDate(a.created_at),
@@ -64,6 +64,24 @@ async function editSubscription(r, planCodes, again) {
       { name: 'notes', label: t('plat.notes'), type: 'textarea', maxlength: 500, value: r.notes || '' },
     ],
     onSubmit: (v) => rpc('platform_set_subscription', { p_club: r.club_id, p_plan: v.plan, p_status: v.status, p_trial_ends: v.trial || null, p_period_end: v.period || null, p_notes: v.notes || '' }),
+  });
+  if (ok) { toast(t('plat.saved'), 'ok'); again(); }
+}
+
+const LOOK = {
+  bg: ['default', 'plain', 'warm', 'mint', 'sky', 'rose', 'slate'],
+  font: ['default', 'classic', 'clear', 'rounded'],
+  fsize: ['sm', 'md', 'lg'],
+  tabs: ['colorful', 'brand', 'pills', 'minimal'],
+};
+// Club look (background, font, text size, tab style): set here by the platform owner only.
+async function editLook(r, again) {
+  const d = await rpc('platform_club_detail', { p_club: r.club_id });
+  const cur = { bg: 'default', font: 'default', fsize: 'md', tabs: 'colorful', ...(d.theme || {}) };
+  const ok = await openForm({
+    title: `${t('plat.look')}: ${r.name}`,
+    fields: Object.keys(LOOK).map((k) => ({ name: k, label: t(`brand.${k}`), type: 'select', required: true, value: cur[k], options: LOOK[k].map((v) => ({ value: v, label: t(`theme.${k}.${v}`) })) })),
+    onSubmit: (v) => rpc('platform_set_club_theme', { p_club: r.club_id, p_bg: v.bg, p_font: v.font, p_fsize: v.fsize, p_tabs: v.tabs }),
   });
   if (ok) { toast(t('plat.saved'), 'ok'); again(); }
 }
@@ -138,9 +156,8 @@ async function editBranding(b, again) {
       { name: 'palette', label: t('plat.palette'), type: 'textarea', required: true, value: (b.palette || []).join(' '), dir: 'ltr', maxlength: 200 },
       { name: 'custom', label: t('plat.allowCustom'), type: 'select', required: true, value: b.allow_custom ? 'yes' : 'no', options: yesNo },
       { name: 'logo', label: t('plat.allowLogo'), type: 'select', required: true, value: b.allow_logo ? 'yes' : 'no', options: yesNo },
-      { name: 'theme', label: t('plat.allowTheme'), type: 'select', required: true, value: b.allow_theme ? 'yes' : 'no', options: yesNo },
     ],
-    onSubmit: (v) => rpc('platform_set_branding', { p_palette: v.palette.toLowerCase().split(/[\s,]+/).filter(Boolean), p_allow_custom: v.custom === 'yes', p_allow_logo: v.logo === 'yes', p_allow_theme: v.theme === 'yes' }),
+    onSubmit: (v) => rpc('platform_set_branding', { p_palette: v.palette.toLowerCase().split(/[\s,]+/).filter(Boolean), p_allow_custom: v.custom === 'yes', p_allow_logo: v.logo === 'yes' }),
   });
   if (ok) { resetBrandingOptions(); toast(t('plat.saved'), 'ok'); again(); }
 }

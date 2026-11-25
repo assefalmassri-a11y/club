@@ -42,7 +42,7 @@ export async function brandingOptions() {
   if (optionsCache) return optionsCache;
   const { data, error } = await sb.rpc('branding_options');
   if (error) throw error;
-  optionsCache = data || { palette: [], allow_custom: false, allow_logo: false, allow_theme: false };
+  optionsCache = data || { palette: [], allow_custom: false, allow_logo: false };
   return optionsCache;
 }
 export function resetBrandingOptions() { optionsCache = null; }
