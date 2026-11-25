@@ -65,17 +65,6 @@ export async function tap(uidRaw) {
     return json;
   } catch (e) { console.error('tap error', e.message); return { open: false, reason: 'network' }; }
 }
-// Keypad entry: member number + 6-digit PIN. The PIN is never logged.
-export async function pinTap(noRaw, pinRaw) {
-  const no = Number(noRaw); const pin = String(pinRaw);
-  if (!Number.isSafeInteger(no) || no < 1 || !/^[0-9]{6}$/.test(pin)) return { open: false, reason: 'bad_input' };
-  const ts = Math.max(Date.now(), lastTap + 1); lastTap = ts;
-  try {
-    const { status, json } = await post('/pin', { door_id: DOOR_ID, member_no: no, pin, ts, sig: hmacHex(`${DOOR_ID}|pin|${no}|${pin}|${ts}`) });
-    if (status === 200 && json.open) openDoor();
-    return json;
-  } catch (e) { console.error('pin error', e.message); return { open: false, reason: 'network' }; }
-}
 // Reader integrations: pipe UIDs (one per line) on stdin, or call the local HTTP endpoint below.
 if (!process.stdin.isTTY) createInterface({ input: process.stdin }).on('line', (l) => { if (l.trim()) tap(l.trim()); });
 
@@ -85,13 +74,6 @@ http.createServer(async (req, res) => {
   if (u.pathname === '/tap' && req.method === 'GET') {
     const r = await tap(u.searchParams.get('uid') || '');
     res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ open: !!r.open }));
-  } else if (u.pathname === '/pin' && req.method === 'POST') {
-    let body = ''; req.on('data', (c) => { body += c; if (body.length > 256) req.destroy(); });
-    req.on('end', async () => {
-      let j = {}; try { j = JSON.parse(body); } catch (_) { /* ignore */ }
-      const r = await pinTap(j.member_no, j.pin);
-      res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ open: !!r.open }));
-    });
   } else { res.writeHead(404); res.end(); }
 }).listen(TAP_PORT, '127.0.0.1');
 

@@ -6,7 +6,6 @@ export const SUPABASE_KEY = 'sb_publishable_SIdujvZkhXtWZ1-GcEwY6Q_IAA-TLDu';
 export const CURRENCY_DECIMALS = { SYP: 2, USD: 2 };
 export const DEFAULT_DECIMALS = 2;
 
-export const LOCALE = 'ar-u-nu-latn';
 export const CHAT_RETENTION_DAYS = 21;
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 

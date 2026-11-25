@@ -5,7 +5,7 @@ import { h, clear, button, openForm, toast, guard, fmtMoney, toMinor, decimals, 
 import { t } from '../i18n.js';
 import { downloadCsv } from '../csv.js';
 
-export async function setRate(row) {
+async function setRate(row) {
   const cur0 = (row.currency || state.club.default_currency).trim();
   const d = decimals(cur0);
   const ok = await openForm({
