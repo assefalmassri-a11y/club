@@ -132,6 +132,7 @@ ul.plain{list-style:none;padding:0;margin:.5rem 0}ul.plain li{padding:.5rem 0;bo
 
 /* Membership ID card + print */
 .id-card{border:1px solid var(--border,#d6dbe3);border-radius:14px;padding:1rem 1.25rem;text-align:center;background:#fff;color:#0f172a;max-width:340px;margin:0 auto 1rem}
+.invoice-doc{max-width:480px;text-align:start}.invoice-doc .id-name,.invoice-doc .id-club,.invoice-doc>.muted{text-align:center}
 .id-club{font-weight:600;color:#0f766e;margin-bottom:.5rem}
 .id-name{font-size:1.2rem;font-weight:700}
 .id-no{font-size:1.6rem;font-weight:800;letter-spacing:.06em;margin:.35rem 0 .75rem}
@@ -146,7 +147,7 @@ ul.plain{list-style:none;padding:0;margin:.5rem 0}ul.plain li{padding:.5rem 0;bo
 .receipt .kv{display:flex;justify-content:space-between;gap:1rem;padding:.25rem 0;text-align:start}
 .avatar{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--surface-2);color:var(--mut);font-weight:700;overflow:hidden;flex:none}
 .avatar img{width:100%;height:100%;object-fit:cover;display:block}
-.avatar.sm{width:34px;height:34px}.avatar.md{width:44px;height:44px}.avatar.lg{width:56px;height:56px;font-size:1.3rem}
+.avatar.xl{width:150px;height:150px;font-size:3.4rem;cursor:zoom-in}.avatar.sm{width:34px;height:34px}.avatar.md{width:44px;height:44px}.avatar.lg{width:56px;height:56px;font-size:1.3rem}
 .wchart{width:100%;height:auto;display:block}.wline{fill:none;stroke:var(--pri-600);stroke-width:2}.wdot{fill:var(--pri-600)}
 .plan-body{white-space:pre-wrap;margin-top:.4rem}
 
@@ -400,3 +401,6 @@ h3{color:var(--fg)}
 
 .notice{background:var(--warn-bg);color:var(--fg);border:1px solid var(--bd);border-inline-start:4px solid var(--warn);border-radius:var(--r-sm);padding:.6rem .9rem;margin:0 0 1rem}
 .notice.bad{background:var(--bad-bg);border-inline-start-color:var(--bad)}
+
+.cam-video{width:100%;max-height:60vh;border-radius:12px;background:#000;display:block;margin:.6rem 0;transform:scaleX(-1)}
+.photo-zoom{max-width:92vw;max-height:88vh;border-radius:14px;display:block}

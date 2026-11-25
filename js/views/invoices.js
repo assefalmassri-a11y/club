@@ -42,17 +42,23 @@ function statusOf(inv) {
 }
 const KIND = { issued: 'warn', paid: 'ok', void: '', overdue: 'bad' };
 
-function showReceipt(inv, memberName) {
+// Printable invoice for any status (receipt details are added once it is paid).
+export function showInvoice(inv, memberName) {
   const overlay = h('div', { class: 'overlay print-overlay' });
   const cur = String(inv.currency).trim();
-  const card = h('div', { class: 'id-card receipt' },
+  const kv = (k, v) => h('div', { class: 'kv' }, h('span', { class: 'muted' }, k), h('strong', null, v));
+  const paid = inv.status === 'paid';
+  const card = h('div', { class: 'id-card receipt invoice-doc' },
     h('div', { class: 'id-club' }, state.club.name),
-    h('div', { class: 'muted' }, t('inv.receipt')),
+    h('div', { class: 'muted' }, paid ? t('inv.receipt') : t('inv.invoice')),
     h('div', { class: 'id-name' }, memberName || ''),
-    h('div', { class: 'kv' }, h('span', { class: 'muted' }, t('inv.number')), h('strong', { class: 'ltr' }, `#${inv.number}`)),
-    h('div', { class: 'kv' }, h('span', { class: 'muted' }, t('inv.label')), h('strong', null, inv.label)),
-    h('div', { class: 'kv' }, h('span', { class: 'muted' }, t('inv.paidOn')), h('strong', null, fmtDate(inv.paid_on))),
-    h('div', { class: 'kv' }, h('span', { class: 'muted' }, t('inv.method')), h('strong', null, inv.payment_method ? t(`inv.m.${inv.payment_method}`) : t('common.none'))),
+    kv(t('inv.number'), h('span', { class: 'ltr' }, `#${inv.number}`)),
+    kv(t('inv.label'), inv.label || t('common.none')),
+    inv.issue_date ? kv(t('inv.issueDate'), fmtDate(inv.issue_date)) : null,
+    inv.due_date ? kv(t('inv.dueDate'), fmtDate(inv.due_date)) : null,
+    kv(t('common.status'), t(`inv.status.${inv.status}`)),
+    paid ? kv(t('inv.paidOn'), fmtDate(inv.paid_on)) : null,
+    paid ? kv(t('inv.method'), inv.payment_method ? t(`inv.m.${inv.payment_method}`) : t('common.none')) : null,
     h('div', { class: 'id-no' }, h('bdi', null, fmtMoney(inv.amount_minor, cur))));
   overlay.append(h('div', { class: 'modal small' }, card,
     h('div', { class: 'row end' }, button(t('common.close'), () => overlay.remove()), button(t('mem.print'), () => window.print(), 'btn primary'))));
@@ -96,7 +102,7 @@ export async function render(box) {
           if (ok === true) { toast(t('inv.paid'), 'ok'); await load(); }
         }, 'btn small primary'));
       }
-      if (inv.status === 'paid') actions.push(button(t('inv.receipt'), () => showReceipt(inv, names.get(inv.member_id)), 'btn small'));
+      actions.push(button(t('mem.print'), () => showInvoice(inv, names.get(inv.member_id)), 'btn small'));
       if (canManage() && inv.status !== 'void') {
         actions.push(button(t('inv.void'), async () => {
           const ok = await openForm({
