@@ -1,7 +1,7 @@
 import { calendarTerm } from '../billing.js';
 import { sb } from '../supa.js';
 import { state, scoped, canManage } from '../state.js';
-import { h, clear, badge, button, openForm, toast, guard, fmtDate, fmtMoney, toMinor, today, addDays, decimals, confirmBox } from '../dom.js';
+import { h, clear, badge, button, openForm, toast, guard, fmtDate, fmtMoney, today, addDays, decimals, confirmBox } from '../dom.js';
 import { t } from '../i18n.js';
 import { openNewInvoice, openInstallments } from './invoices.js';
 import { openCoupons } from './coupons.js';

@@ -1,7 +1,7 @@
 // Discount coupons (owner / branch manager).
 import { sb } from '../supa.js';
 import { state } from '../state.js';
-import { h, clear, badge, button, openForm, toast, guard, fmtDate } from '../dom.js';
+import { h, clear, badge, button, openForm, guard, fmtDate } from '../dom.js';
 import { t } from '../i18n.js';
 
 async function edit(c) {

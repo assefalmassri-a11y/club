@@ -1,6 +1,6 @@
 import { sb } from '../supa.js';
 import { scoped, currency } from '../state.js';
-import { h, clear, badge, fmtDateTime, fmtMoney, today } from '../dom.js';
+import { h, clear, badge, fmtDateTime, today } from '../dom.js';
 import { t } from '../i18n.js';
 import { avatar } from '../photo.js';
 
