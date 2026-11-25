@@ -3,7 +3,7 @@ import { h, badge, fmtDateTime } from '../../js/dom.js';
 import { t } from '../../js/i18n.js';
 import { me } from './ctx.js';
 
-const METHOD = { qr: 'act.qr', card: 'act.card', pin: 'act.pin', door: 'act.door', staff: 'act.staff', app: 'act.app' };
+const METHOD = { card: 'act.card', pin: 'act.pin', door: 'act.door', staff: 'act.staff', app: 'act.app' };
 
 export async function render(box) {
   const [{ data: ins, error: e1 }, { data: tries, error: e2 }] = await Promise.all([

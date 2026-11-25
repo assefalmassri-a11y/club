@@ -165,7 +165,7 @@ body:has(.auth-card){background:radial-gradient(900px 500px at 80% 0,color-mix(i
 .nav button{--tc:var(--a-teal)}
 [data-tab=overview],[data-tab=home],[data-tab=coach]{--tc:var(--a-teal)}
 [data-tab=reception],[data-tab=chat],[data-tab=equipment]{--tc:var(--a-sky)}
-[data-tab=members],[data-tab=doors],[data-tab=staff],[data-tab=scan]{--tc:var(--a-indigo)}
+[data-tab=members],[data-tab=doors],[data-tab=staff]{--tc:var(--a-indigo)}
 [data-tab=invoices],[data-tab=shop],[data-tab=board]{--tc:var(--a-amber)}
 [data-tab=ledger],[data-tab=body]{--tc:var(--a-green)}
 [data-tab=reports],[data-tab=analytics],[data-tab=pt]{--tc:var(--a-violet)}
