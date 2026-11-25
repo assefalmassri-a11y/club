@@ -10,6 +10,20 @@ function tile(label, value, ic, tone = '') {
   return h('div', { class: `tile ${tone}` }, h('span', { class: 'tile-ic' }, icon(ic, 20)), h('div', { class: 'tile-value' }, String(value)), h('div', { class: 'tile-label' }, label));
 }
 
+async function subscriptionBanner(box) {
+  if (!canManage()) return;
+  const { data: s, error } = await sb.rpc('my_club_subscription', { p_club: state.club.id });
+  if (error || !s) return;
+  const lim = (v) => (v == null ? t('sub.unlimited') : v);
+  const msgs = [];
+  if (s.blocked) msgs.push(t(`sub.${s.blocked}`));
+  else if (s.status === 'past_due') msgs.push(t('sub.past_due'));
+  else if (s.status === 'trial' && s.trial_ends_on) msgs.push(t('sub.trialLeft', { d: fmtDate(s.trial_ends_on) }));
+  const usage = t('sub.usage', { b: s.branches, mb: lim(s.max_branches), m: s.members, mm: lim(s.max_members) });
+  box.append(h('div', { class: `notice ${s.blocked || s.status === 'past_due' ? 'bad' : ''}`, role: 'status' },
+    h('strong', null, `${t('sub.title')}: ${s.plan_name}`), h('div', { class: 'muted small' }, usage), ...msgs.map((m) => h('div', null, m))));
+}
+
 async function count(q) {
   const { count: c, error } = await q;
   if (error) throw error;
@@ -26,6 +40,7 @@ export async function render(box) {
     count(scoped(sb.from('members').select('id', { count: 'exact', head: true }).eq('status', 'active'))),
   ]);
 
+  await subscriptionBanner(box);
   box.append(h('div', { class: 'tiles' },
     tile(t('ov.inside'), inside, 'inside', 'ok'),
     tile(t('ov.checkins24'), checkins, 'clock', 'sky'),

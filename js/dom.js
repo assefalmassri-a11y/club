@@ -36,6 +36,9 @@ export function errText(e) {
   const m = String((e && e.message) || e || '');
   if (/MFA required/i.test(m) || /aal2/i.test(m)) return t('err.mfa');
   if (/throttl|too many/i.test(m)) return t('err.throttled');
+  if (/member_limit_reached/.test(m)) return t('err.memberLimit');
+  if (/branch_limit_reached/.test(m)) return t('err.branchLimit');
+  if (/trial_expired|subscription_suspended/.test(m)) return t(`sub.${m.match(/trial_expired|subscription_suspended/)[0]}`);
   if (/not allowed|permission denied|row-level security|42501/i.test(m)) return t('err.denied');
   return `${t('err.generic')}: ${m}`.slice(0, 240);
 }

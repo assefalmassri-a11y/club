@@ -24,6 +24,7 @@ import * as shop from './views/shop.js';
 import * as equipment from './views/equipment.js';
 import * as reception from './views/reception.js';
 import * as audit from './views/audit.js';
+import * as platform from './views/platform.js';
 
 const root = document.getElementById('app');
 initLang();
@@ -47,6 +48,7 @@ const TABS = [
   { id: 'doors', g: 'sys', view: doors, roles: ['owner', 'branch_manager'] },
   { id: 'staff', g: 'sys', view: staff, roles: ['owner', 'branch_manager'] },
   { id: 'audit', g: 'sys', view: audit, roles: ['owner'] },
+  { id: 'platform', g: 'sys', view: platform, roles: ['owner', 'branch_manager', 'staff', 'trainer'], platformOnly: true },
   { id: 'settings', g: 'sys', view: settings, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },
 ];
 
@@ -107,7 +109,7 @@ function showNoClub() {
   root.append(h('main', { class: 'auth-card' }, h('h1', { class: 'brand' }, t('app.name')), h('h2', null, t('ctx.noClubTitle')), h('p', { class: 'muted' }, t('ctx.noClubHelp')), create, out));
 }
 
-function visibleTabs() { return TABS.filter((tb) => tb.roles.includes(state.role)); }
+function visibleTabs() { return TABS.filter((tb) => tb.roles.includes(state.role) && (!tb.platformOnly || state.isPlatformAdmin)); }
 
 async function show(tabId) {
   if (typeof cleanup === 'function') { try { cleanup(); } catch (_) { /* ignore */ } }
@@ -181,6 +183,7 @@ async function start() {
     clear(root);
     root.append(spinner());
     await loadContext();
+    try { const { data: pa } = await sb.rpc('is_platform_admin'); state.isPlatformAdmin = pa === true; } catch (_) { state.isPlatformAdmin = false; }
     if (!state.staffRows.length) { showNoClub(); return; }
     let last = null;
     try { last = localStorage.getItem('club.last'); } catch (_) { /* ignore */ }

@@ -398,3 +398,6 @@ h3{color:var(--fg)}
 @media (prefers-color-scheme:light) and (max-width:860px){
 :root:not([data-theme=dark]) .side{background:rgba(255,255,255,.94);backdrop-filter:blur(12px);box-shadow:0 -8px 28px rgba(30,64,175,.14)}:root:not([data-theme=dark]) .nav button:not(.active) svg{background:transparent}:root:not([data-theme=dark]) .nav button.active svg{background:color-mix(in srgb,var(--tc) 18%,#fff);color:var(--tc);box-shadow:none}
 }
+
+.notice{background:var(--warn-bg);color:var(--fg);border:1px solid var(--bd);border-inline-start:4px solid var(--warn);border-radius:var(--r-sm);padding:.6rem .9rem;margin:0 0 1rem}
+.notice.bad{background:var(--bad-bg);border-inline-start-color:var(--bad)}
