@@ -1,6 +1,6 @@
 // Club door device program (Node 18+, no dependencies).
 // Runs on a Raspberry Pi / mini PC at the door. Responsibilities:
-//  1. Poll the gateway for unlock commands (e.g. app proximity) and pulse the relay.
+//  1. Poll the gateway for unlock commands and pulse the relay.
 //  2. Send signed card taps (UIDs read from a local reader) and pulse the relay when allowed.
 // SAFETY: exit must never depend on this program; keep a mechanical exit / emergency release.
 import http from 'node:http';

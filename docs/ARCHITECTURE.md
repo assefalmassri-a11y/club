@@ -10,7 +10,7 @@ index.html, js/            staff dashboard (entry: js/main.js)
   supa.js, config.js       Supabase client and public config
 member/                    member app (entry: member/js/main.js), reuses js/dom.js, i18n, supa
 door-device/               Node program for the door (card taps + relay)
-supabase/migrations/       full DB history (phases 1–20), identical to production; the DB can be rebuilt from it
+supabase/migrations/       full DB history (phases 1–21), identical to production; the DB can be rebuilt from it
 scripts/                   serve.mjs (dev server), check.mjs (static checks)
 tests/                     smoke test + in-memory fake of supabase-js
 ```
@@ -29,7 +29,7 @@ Club → branches → members → memberships (plan, branch scope) and invoices/
 Security model: RLS on every table, restrictive no-anonymous policies, MFA (aal2) for sensitive operations, append-only audit log with a hash chain (`verify_audit_chain`), immutable invoices and ledger. Details: project docs `security-hardening` and `docs/FEATURES.md`.
 
 ## Door access
-Reader → `door-device/door.mjs` signs the tap (HMAC with the door secret) → Edge Function `door-gateway/tap` → `card_tap` (verifies signature, timestamp, card, membership) → `process_door_access` records the attempt and issues an open command → the device pulses the relay. Proximity opening from the app: the member home shows an "Open the door" control (`member/js/opendoor.js`, doors from `my_doors`) that sends GPS to `open_door_nearby` (accuracy ≤ 50 m, within the door radius); staff set each door location in the Doors tab (`set_door_location`, MFA + owner/manager, radius 10–200 m) by standing at the door. No barcode or QR entry exists.
+Reader → `door-device/door.mjs` signs the tap (HMAC with the door secret) → Edge Function `door-gateway/tap` → `card_tap` (verifies signature, timestamp, card, membership) → `process_door_access` records the attempt and issues an open command → the device pulses the relay. No barcode or QR entry exists.
 
 ## Platform layer
 Each club has a subscription (trial / active / past_due / suspended) on a plan with branch and member limits, enforced by triggers on `members` and `branches`. Billing is manual: a platform admin (row in `platform_admins`) edits the subscription from the Platform tab. Existing clubs are on `unlimited`.
