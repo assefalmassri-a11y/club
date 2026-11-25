@@ -91,7 +91,7 @@ async function loadMe() {
   if (error) throw error;
   if (!ms || !ms.length) return false;
   me.member = ms[0];
-  const { data: club, error: ce } = await sb.from('clubs').select('id, name, default_currency, brand_color, logo_path').eq('id', me.member.club_id).single();
+  const { data: club, error: ce } = await sb.from('clubs').select('id, name, default_currency, brand_color, logo_path, theme').eq('id', me.member.club_id).single();
   if (ce) throw ce;
   me.club = club;
   applyBrand(club);

@@ -415,5 +415,31 @@ h3{color:var(--fg)}
 :root[data-brand] .btn.primary:hover{filter:brightness(1.1)}
 :root[data-brand] .view>h2::before,:root[data-brand] .view>.row:first-child>h2::before{background:linear-gradient(180deg,var(--pri),color-mix(in srgb,var(--pri) 55%,#fff));box-shadow:none}
 :root[data-brand] .hero{background:linear-gradient(135deg,var(--pri-600),color-mix(in srgb,var(--pri-600) 55%,#000));box-shadow:0 14px 36px color-mix(in srgb,var(--pri-600) 35%,transparent)}
-:root[data-brand] .nav button,:root[data-brand] [data-tab=overview],:root[data-brand] [data-tab=home],:root[data-brand] [data-tab=coach],:root[data-brand] [data-tab=clients]{--tc:var(--pri)}
+:root[data-brand]:not([data-tabs=colorful]) .nav button,:root[data-brand]:not([data-tabs=colorful]) [data-tab=overview],:root[data-brand]:not([data-tabs=colorful]) [data-tab=home],:root[data-brand]:not([data-tabs=colorful]) [data-tab=coach],:root[data-brand]:not([data-tabs=colorful]) [data-tab=clients]{--tc:var(--pri)}
 :root[data-brand] .grid th{color:color-mix(in srgb,var(--pri) 75%,var(--fg))}
+
+/* Club theme layer (clubs.theme, set by js/brand.js): background tone, font, text size and tab style. System fonts only (CSP). Must stay last. */
+:root[data-bg=plain]{--bgc-l:#ffffff;--bgc-d:#0b0f19}
+:root[data-bg=warm]{--bgc-l:#fbf3e6;--bgc-d:#1a130b}
+:root[data-bg=mint]{--bgc-l:#e8f7f0;--bgc-d:#0a1a14}
+:root[data-bg=sky]{--bgc-l:#e6f1fb;--bgc-d:#08141f}
+:root[data-bg=rose]{--bgc-l:#fbeaee;--bgc-d:#1c0e13}
+:root[data-bg=slate]{--bgc-l:#e9ecf1;--bgc-d:#11141a}
+:root[data-bg] body,:root[data-bg] body:has(.auth-card){background:radial-gradient(1100px 480px at 85% -10%,color-mix(in srgb,var(--pri) 9%,transparent),transparent),var(--bgc-l);background-attachment:fixed}
+:root[data-bg][data-theme=dark] body,:root[data-bg][data-theme=dark] body:has(.auth-card){background:radial-gradient(1100px 480px at 85% -10%,color-mix(in srgb,var(--pri) 14%,transparent),transparent),var(--bgc-d);background-attachment:fixed}
+@media (prefers-color-scheme:dark){:root[data-bg]:not([data-theme=light]) body,:root[data-bg]:not([data-theme=light]) body:has(.auth-card){background:radial-gradient(1100px 480px at 85% -10%,color-mix(in srgb,var(--pri) 14%,transparent),transparent),var(--bgc-d);background-attachment:fixed}}
+:root[data-font=classic] body{font-family:Georgia,"Times New Roman","Noto Naskh Arabic","Traditional Arabic",serif}
+:root[data-font=clear] body{font-family:Verdana,Tahoma,"Noto Sans Arabic","DejaVu Sans",sans-serif}
+:root[data-font=rounded] body{font-family:"Trebuchet MS","Segoe UI","Noto Sans Arabic",system-ui,sans-serif}
+:root[data-fsize=sm] body{font-size:13.5px}
+:root[data-fsize=lg] body{font-size:17px}
+:root[data-tabs=pills] .nav button{border-radius:999px}
+:root[data-tabs=pills] .nav button.active{background:var(--pri);color:var(--pri-fg);box-shadow:0 4px 14px color-mix(in srgb,var(--pri) 35%,transparent)}
+:root[data-tabs=pills] .nav button.active svg{background:transparent;color:var(--pri-fg);box-shadow:none}
+:root[data-tabs=pills] .nav button.active::before{display:none}
+:root[data-tabs=minimal] .nav button svg,:root[data-tabs=minimal] .nav button:hover svg,:root[data-tabs=minimal] .nav button.active svg{background:transparent;box-shadow:none;color:var(--tc)}
+:root[data-tabs=minimal] .nav button.active{background:none;color:var(--tc);font-weight:800}
+@media (max-width:860px){
+:root[data-tabs=pills] .nav button.active{background:var(--pri);color:var(--pri-fg)}
+:root[data-tabs=pills] .nav button.active svg{color:var(--pri-fg)}
+}

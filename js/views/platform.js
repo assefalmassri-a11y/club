@@ -41,7 +41,8 @@ export async function render(box, ctx) {
     h('div', { class: 'row gap wrap' },
       (branding.palette || []).map((c) => { const sw = h('span', { class: 'swatch', title: c }); sw.style.background = c; return sw; }),
       badge(`${t('plat.allowCustom')}: ${branding.allow_custom ? t('plat.on') : t('plat.off')}`, branding.allow_custom ? 'ok' : ''),
-      badge(`${t('plat.allowLogo')}: ${branding.allow_logo ? t('plat.on') : t('plat.off')}`, branding.allow_logo ? 'ok' : '')),
+      badge(`${t('plat.allowLogo')}: ${branding.allow_logo ? t('plat.on') : t('plat.off')}`, branding.allow_logo ? 'ok' : ''),
+      badge(`${t('plat.allowTheme')}: ${branding.allow_theme ? t('plat.on') : t('plat.off')}`, branding.allow_theme ? 'ok' : '')),
     h('div', { class: 'row between wrap' }, h('h3', { class: 'section' }, t('plat.admins')), button(t('plat.addAdmin'), () => guard(() => addAdmin(again)), 'btn small')),
     table([t('mem.email'), t('common.date'), ''],
       (admins || []).map((a) => [h('span', { class: 'ltr' }, a.email), fmtDate(a.created_at),
@@ -137,8 +138,9 @@ async function editBranding(b, again) {
       { name: 'palette', label: t('plat.palette'), type: 'textarea', required: true, value: (b.palette || []).join(' '), dir: 'ltr', maxlength: 200 },
       { name: 'custom', label: t('plat.allowCustom'), type: 'select', required: true, value: b.allow_custom ? 'yes' : 'no', options: yesNo },
       { name: 'logo', label: t('plat.allowLogo'), type: 'select', required: true, value: b.allow_logo ? 'yes' : 'no', options: yesNo },
+      { name: 'theme', label: t('plat.allowTheme'), type: 'select', required: true, value: b.allow_theme ? 'yes' : 'no', options: yesNo },
     ],
-    onSubmit: (v) => rpc('platform_set_branding', { p_palette: v.palette.toLowerCase().split(/[\s,]+/).filter(Boolean), p_allow_custom: v.custom === 'yes', p_allow_logo: v.logo === 'yes' }),
+    onSubmit: (v) => rpc('platform_set_branding', { p_palette: v.palette.toLowerCase().split(/[\s,]+/).filter(Boolean), p_allow_custom: v.custom === 'yes', p_allow_logo: v.logo === 'yes', p_allow_theme: v.theme === 'yes' }),
   });
   if (ok) { resetBrandingOptions(); toast(t('plat.saved'), 'ok'); again(); }
 }

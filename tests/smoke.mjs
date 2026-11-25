@@ -162,6 +162,25 @@ for (const [name, admin, wantTab] of [['platform admin', true, true], ['owner', 
   await ctx.close();
 }
 
+// Club theme: the saved look is applied at start, previews live in Settings and is stored only on Save.
+{
+  const init = `window.__DB.clubs[0].theme={bg:'warm',font:'classic',fsize:'lg',tabs:'pills'};window.__RPC.branding_options={palette:['#0d9488'],allow_custom:false,allow_logo:false,allow_theme:true};`;
+  const { ctx, page, errors } = await open(init);
+  await page.goto(`${base}/`);
+  await page.waitForSelector('nav button[data-tab="settings"]');
+  const attrs = await page.evaluate(() => ['data-bg', 'data-font', 'data-fsize', 'data-tabs'].map((a) => document.documentElement.getAttribute(a)).join());
+  await page.evaluate(() => document.querySelector('nav button[data-tab="settings"]').click());
+  await page.waitForSelector('select[aria-label]');
+  await page.locator('select').filter({ has: page.locator('option[value="mint"]') }).selectOption('mint');
+  const live = await page.evaluate(() => document.documentElement.getAttribute('data-bg'));
+  await page.locator('.view button', { hasText: /حفظ المظهر|Save look/ }).click();
+  await page.waitForTimeout(400);
+  const calls = await page.evaluate(() => window.__CALLS.filter((c) => c.rpc === 'set_club_theme'));
+  if (attrs !== 'warm,classic,lg,pills' || live !== 'mint' || !calls.length || calls[0].args.p_bg !== 'mint' || calls[0].args.p_tabs !== 'pills' || errors.length) fail(`theme: ${attrs} ${live} ${JSON.stringify(calls)} ${errors}`);
+  else console.log('ok club theme');
+  await ctx.close();
+}
+
 // Member profile opens with details, subscriptions, entries and invoices.
 {
   const { ctx, page, errors } = await open();
