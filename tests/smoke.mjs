@@ -78,6 +78,21 @@ for (const [name, admin, wantTab] of [['platform admin', true, true], ['owner', 
   await ctx.close();
 }
 
+// Member profile opens with details, subscriptions, entries and invoices.
+{
+  const { ctx, page, errors } = await open();
+  await page.goto(`${base}/`);
+  await page.waitForSelector('nav button[data-tab="members"]');
+  await page.evaluate(() => document.querySelector('nav button[data-tab="members"]').click());
+  await page.waitForSelector('.view tbody tr button');
+  await page.locator('.view tbody tr button', { hasText: /ملف العضو|Member profile/ }).first().click();
+  await page.waitForSelector('.modal.wide h3.section');
+  const heads = await page.$$eval('.modal.wide h3.section', (e) => e.length);
+  if (heads !== 4 || errors.length) fail(`member profile: sections=${heads} ${errors}`);
+  else console.log('ok member profile');
+  await ctx.close();
+}
+
 // Sign-in screens link to the legal pages, and those pages load.
 for (const app of ['/', '/member/']) {
   const { ctx, page, errors } = await open('window.__NOSESSION = true');
