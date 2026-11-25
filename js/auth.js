@@ -3,9 +3,15 @@ import { sb } from './supa.js';
 import { h, clear, toast, errText } from './dom.js';
 import { t } from './i18n.js';
 
+// Links to the legal pages that sit next to index.html (works from / and /member/).
+function legalLinks() {
+  const base = location.pathname.replace(/member\/(index\.html)?$/, '').replace(/index\.html$/, '');
+  return h('p', { class: 'muted small' }, h('a', { href: `${base}privacy.html` }, t('legal.privacy')), ' · ', h('a', { href: `${base}terms.html` }, t('legal.terms')));
+}
+
 function shell(root, title, ...children) {
   clear(root);
-  root.append(h('main', { class: 'auth-card' }, h('h1', { class: 'brand' }, t('app.name')), h('h2', null, title), ...children, h('div', { class: 'list-simple section' }, langControl())));
+  root.append(h('main', { class: 'auth-card' }, h('h1', { class: 'brand' }, t('app.name')), h('h2', null, title), ...children, h('div', { class: 'list-simple section' }, langControl()), legalLinks()));
 }
 
 export function showLogin(root) {

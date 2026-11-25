@@ -60,6 +60,7 @@ const dicts = {
     'mem.modeCalendar': 'شهر تقويمي',
     'mem.subPriced': 'تم الاشتراك: {amount} حتى {date}',
     'auth.forgot': 'نسيت كلمة المرور؟',
+    'legal.privacy': 'سياسة الخصوصية', 'legal.terms': 'شروط الاستخدام',
     'auth.forgotEmail': 'اكتب بريدك أولاً',
     'auth.forgotSent': 'إن كان البريد مسجلاً، أرسلنا رابط إعادة التعيين',
     'auth.resetTitle': 'كلمة مرور جديدة',
