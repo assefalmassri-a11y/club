@@ -310,6 +310,7 @@ export const en = {
   'chat.created': 'Channel created',
   'err.generic': 'The operation could not be completed', 'err.mfa': 'Two-step verification is required for this operation', 'err.denied': 'You are not allowed to do this',
   'err.throttled': 'Too many attempts, please wait a moment', 'err.invalid': 'Invalid data', 'err.amount': 'Invalid amount',
+  'mem.profile': 'Member profile', 'prof.info': 'Details', 'prof.joined': 'Joined', 'prof.birth': 'Date of birth', 'prof.subs': 'Subscriptions', 'prof.from': 'From', 'prof.to': 'To', 'prof.access': 'Entries and exits',
   'mem.more': 'More', 'mem.invite': 'App link code', 'mem.inviteTitle': 'Member account link code',
   'mem.inviteHelp': 'Give this code to the member. They enter it once in their app within 7 days. It will not be shown again.',
   'm.tab.home': 'Home','m.tab.events': 'Events', 'm.tab.invoices': 'My invoices', 'm.tab.chat': 'Chat',

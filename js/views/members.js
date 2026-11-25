@@ -7,6 +7,7 @@ import { openNewInvoice, openInstallments } from './invoices.js';
 import { openCoupons } from './coupons.js';
 import { openTracking, editPlan as editWorkoutPlan } from './tracking.js';
 import { avatar, pickPhoto, uploadPhoto } from '../photo.js';
+import { openMemberProfile } from './member-profile.js';
 
 const STATUS_KIND = { active: 'ok', frozen: 'warn', expired: 'bad', cancelled: 'bad' };
 
@@ -247,6 +248,7 @@ function moreMenu(member, ctx) {
   const run = (fn) => async () => { overlay.remove(); await guard(fn); };
   overlay.append(h('div', { class: 'modal small' }, h('h2', null, member.full_name),
     h('div', { class: 'menu-list' },
+      button(t('mem.profile'), () => { overlay.remove(); openMemberProfile(member); }, 'btn block primary'),
       button(t('mem.edit'), async () => { overlay.remove(); await guard(() => editMember(member)); ctx.rerender(); }, 'btn block'),
       button(t('mem.manageSub'), async () => { overlay.remove(); await guard(() => manageMembership(member)); ctx.rerender(); }, 'btn block'),
       button(t('inst.title'), run(() => openInstallments({ memberId: member.id, memberName: member.full_name })), 'btn block'),
@@ -310,6 +312,7 @@ export async function render(box, ctx) {
         }), 'btn small'),
         button(t('mem.subscribe'), async () => { if (await guard(() => subscribe(m))) load(); }, 'btn small'),
         button(t('mem.invoice'), () => guard(() => openNewInvoice({ memberId: m.id, memberName: m.full_name })), 'btn small'),
+        button(t('mem.profile'), () => openMemberProfile(m), 'btn small'),
         button(t('mem.more'), () => moreMenu(m, ctx), 'btn small ghost'))));
 
     list.append(h('table', { class: 'grid' },
