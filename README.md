@@ -22,7 +22,7 @@ npm i && npx playwright install chromium && npm test   # اختبار دخان �
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): النشر وإعدادات Supabase اليدوية.
 - [docs/FEATURES.md](docs/FEATURES.md): سجل الميزات حسب المراحل.
 - [door-device/README.md](door-device/README.md): تشغيل جهاز الباب.
-- `supabase/migrations/`: الـ migrations المحفوظة في المستودع (من المرحلة 19؛ السابقة مطبّقة على القاعدة وموثّقة في مستندات المشروع).
+- `supabase/migrations/`: كل تاريخ القاعدة (المراحل 1–20) مطابق للإنتاج، ويمكن إعادة بناء القاعدة منه.
 
 ## قواعد أساسية
 - كل الكود والتعليقات بالإنجليزي، والواجهة والمستندات بالعربي (مع ترجمة إنكليزية كاملة).

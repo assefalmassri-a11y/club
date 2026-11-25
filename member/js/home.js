@@ -7,6 +7,7 @@ import { pushControl } from '../../js/push.js';
 import { langControl } from '../../js/lang.js';
 import { themeControl } from '../../js/theme.js';
 import { avatar } from '../../js/photo.js';
+import { openDoorControl } from './opendoor.js';
 
 export async function render(box, ctx) {
   const [{ data: ms }, { data: last }] = await Promise.all([
@@ -18,6 +19,8 @@ export async function render(box, ctx) {
     avatar(me.member.photo_path, me.member.full_name, 'lg'), h('div', { class: 'muted' }, t('m.hello')), h('h2', null, me.member.full_name), h('div', { class: 'muted ltr' }, `${t('m.memberNo')} #${me.member.member_no}`),
     active ? h('div', { class: 'big' }, `${t('m.validUntil')} ${fmtDate(active.ends_on)}`) : h('div', { class: 'big' }, t('m.noActive')),
     last && last[0] ? h('div', { class: 'muted small', style: null }, `${t('m.lastVisit')}: ${fmtDateTime(last[0].checked_in_at)}`) : null));
+  const door = await openDoorControl();
+  if (door) box.append(door);
   const { data: reqs } = await sb.from('freeze_requests').select('id, status, kind, requested_at').eq('member_id', me.member.id).order('requested_at', { ascending: false }).limit(1);
   const req = reqs && reqs[0];
   const pending = req && req.status === 'pending';
