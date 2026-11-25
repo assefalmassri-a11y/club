@@ -7,6 +7,7 @@ export const state = {
   role: null,      // role of the user in the selected club
   branches: [],    // branches visible in the selected club
   branchId: null,  // null = all visible branches
+  isPlatformAdmin: false, // set at start from rpc is_platform_admin
   openConversation: null, // set by other views to jump into a chat
 };
 
