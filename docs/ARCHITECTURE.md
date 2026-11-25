@@ -10,7 +10,7 @@ index.html, js/            staff dashboard (entry: js/main.js)
   supa.js, config.js       Supabase client and public config
 member/                    member app (entry: member/js/main.js), reuses js/dom.js, i18n, supa
 door-device/               Node program for the door (card taps + relay)
-supabase/migrations/       full DB history (phases 1–24), identical to production; the DB can be rebuilt from it
+supabase/migrations/       full DB history (phases 1–26), identical to production; the DB can be rebuilt from it
 scripts/                   serve.mjs (dev server), check.mjs (static checks)
 tests/                     smoke test + in-memory fake of supabase-js
 ```

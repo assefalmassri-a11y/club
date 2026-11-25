@@ -133,7 +133,7 @@ ul.plain{list-style:none;padding:0;margin:.5rem 0}ul.plain li{padding:.5rem 0;bo
 /* Membership ID card + print */
 .id-card{border:1px solid var(--border,#d6dbe3);border-radius:14px;padding:1rem 1.25rem;text-align:center;background:#fff;color:#0f172a;max-width:340px;margin:0 auto 1rem}
 .invoice-doc{max-width:480px;text-align:start}.invoice-doc .id-name,.invoice-doc .id-club,.invoice-doc>.muted{text-align:center}
-.id-club{font-weight:600;color:#0f766e;margin-bottom:.5rem}
+.id-club{font-weight:600;color:var(--pri-600);margin-bottom:.5rem}
 .id-name{font-size:1.2rem;font-weight:700}
 .id-no{font-size:1.6rem;font-weight:800;letter-spacing:.06em;margin:.35rem 0 .75rem}
 @media print{
@@ -404,3 +404,16 @@ h3{color:var(--fg)}
 
 .cam-video{width:100%;max-height:60vh;border-radius:12px;background:#000;display:block;margin:.6rem 0;transform:scaleX(-1)}
 .photo-zoom{max-width:92vw;max-height:88vh;border-radius:14px;display:block}
+.logo-mark .logo-img{width:100%;height:100%;object-fit:contain;border-radius:inherit;background:#fff}
+.club-logo{max-height:48px;max-width:160px;object-fit:contain;display:block;margin:0 auto .5rem}
+.hero-logo{max-height:40px;max-width:140px;object-fit:contain;display:block;margin-bottom:.5rem}
+.swatches{display:flex;flex-wrap:wrap;gap:.5rem;margin:.6rem 0}.swatch{width:36px;height:36px;border-radius:50%;border:2px solid var(--bd);cursor:pointer;padding:0}.swatch.sel{outline:3px solid var(--pri);outline-offset:2px}
+
+/* Club brand layer: active only when the club has an accent colour (html[data-brand], set by js/brand.js). Must stay last. */
+:root[data-brand] .logo-mark{background:linear-gradient(135deg,var(--pri),var(--pri-600));color:var(--pri-fg);box-shadow:0 8px 18px color-mix(in srgb,var(--pri) 40%,transparent)}
+:root[data-brand] .btn.primary,:root[data-brand] .btn.primary:hover{background:linear-gradient(135deg,var(--pri-600),color-mix(in srgb,var(--pri-600) 78%,#000));color:#fff;box-shadow:0 6px 18px color-mix(in srgb,var(--pri-600) 35%,transparent)}
+:root[data-brand] .btn.primary:hover{filter:brightness(1.1)}
+:root[data-brand] .view>h2::before,:root[data-brand] .view>.row:first-child>h2::before{background:linear-gradient(180deg,var(--pri),color-mix(in srgb,var(--pri) 55%,#fff));box-shadow:none}
+:root[data-brand] .hero{background:linear-gradient(135deg,var(--pri-600),color-mix(in srgb,var(--pri-600) 55%,#000));box-shadow:0 14px 36px color-mix(in srgb,var(--pri-600) 35%,transparent)}
+:root[data-brand] .nav button,:root[data-brand] [data-tab=overview],:root[data-brand] [data-tab=home],:root[data-brand] [data-tab=coach],:root[data-brand] [data-tab=clients]{--tc:var(--pri)}
+:root[data-brand] .grid th{color:color-mix(in srgb,var(--pri) 75%,var(--fg))}

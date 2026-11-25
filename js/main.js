@@ -8,6 +8,7 @@ import { initTheme } from './theme.js';
 import { icon } from './icons.js';
 
 import * as overview from './views/overview.js';
+import { applyBrand, logoImg } from './brand.js';
 import * as members from './views/members.js';
 import * as review from './views/review.js';
 import * as invoices from './views/invoices.js';
@@ -67,7 +68,7 @@ async function loadContext() {
   const ids = [...new Set(state.staffRows.map((r) => r.club_id))];
   state.clubs = {};
   if (ids.length) {
-    const { data: clubs, error: e2 } = await sb.from('clubs').select('id, name, slug, default_currency, timezone').in('id', ids);
+    const { data: clubs, error: e2 } = await sb.from('clubs').select('id, name, slug, default_currency, timezone, brand_color, logo_path').in('id', ids);
     if (e2) throw e2;
     for (const c of clubs || []) state.clubs[c.id] = c;
   }
@@ -76,6 +77,7 @@ async function loadContext() {
 async function selectClub(clubId) {
   const row = state.staffRows.find((r) => r.club_id === clubId);
   state.club = state.clubs[clubId];
+  applyBrand(state.club);
   state.role = row.role;
   const { data, error } = await sb.from('branches').select('id, name').eq('club_id', clubId).order('created_at');
   if (error) throw error;
@@ -166,7 +168,7 @@ function renderShell() {
 
   root.append(h('div', { class: 'shell' },
     h('aside', { class: 'side' },
-      h('div', { class: 'logo' }, h('span', { class: 'logo-mark' }, initial), h('div', null, h('strong', null, state.club.name), h('div', { class: 'muted small' }, t(`role.${state.role}`)))),
+      h('div', { class: 'logo' }, h('span', { class: 'logo-mark' }, logoImg(state.club, 'logo-img') || initial), h('div', null, h('strong', null, state.club.name), h('div', { class: 'muted small' }, t(`role.${state.role}`)))),
       nav, h('div', { class: 'side-foot' }, out)),
     h('div', { class: 'main-col' },
       h('header', { class: 'topbar' },

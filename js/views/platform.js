@@ -2,6 +2,7 @@
 import { sb } from '../supa.js';
 import { h, openForm, toast, fmtDate, fmtDateTime, fmtMoney, button, badge, guard, confirmBox } from '../dom.js';
 import { t } from '../i18n.js';
+import { resetBrandingOptions } from '../brand.js';
 
 const STATUSES = ['trial', 'active', 'past_due', 'suspended'];
 const TONE = { trial: 'warn', active: 'ok', past_due: 'warn', suspended: 'bad' };
@@ -15,8 +16,8 @@ function table(heads, rows) {
 }
 
 export async function render(box, ctx) {
-  const [clubs, plans, admins, log] = await Promise.all([
-    rpc('platform_list_clubs'), rpc('platform_list_plans'), rpc('platform_list_admins'), rpc('platform_list_log', { p_limit: 50 })]);
+  const [clubs, plans, admins, log, branding] = await Promise.all([
+    rpc('platform_list_clubs'), rpc('platform_list_plans'), rpc('platform_list_admins'), rpc('platform_list_log', { p_limit: 50 }), rpc('branding_options')]);
   const again = () => ctx.rerender();
   const planCodes = (plans || []).map((p) => p.code);
 
@@ -35,6 +36,12 @@ export async function render(box, ctx) {
       (plans || []).map((p) => [h('span', { class: 'ltr' }, p.code), p.name, p.max_branches ?? t('sub.unlimited'), p.max_members ?? t('sub.unlimited'),
         p.price_cents == null ? '—' : h('bdi', null, fmtMoney(p.price_cents, String(p.currency || 'USD').trim())), badge(p.active ? t('door.active') : t('door.inactive'), p.active ? 'ok' : ''),
         button(t('mem.edit'), () => guard(() => editPlan(p, again)), 'btn small')])),
+    h('div', { class: 'row between wrap' }, h('h3', { class: 'section' }, t('plat.branding')), button(t('plat.brandingEdit'), () => guard(() => editBranding(branding, again)), 'btn small')),
+    h('p', { class: 'muted small' }, t('plat.brandingHelp')),
+    h('div', { class: 'row gap wrap' },
+      (branding.palette || []).map((c) => { const sw = h('span', { class: 'swatch', title: c }); sw.style.background = c; return sw; }),
+      badge(`${t('plat.allowCustom')}: ${branding.allow_custom ? t('plat.on') : t('plat.off')}`, branding.allow_custom ? 'ok' : ''),
+      badge(`${t('plat.allowLogo')}: ${branding.allow_logo ? t('plat.on') : t('plat.off')}`, branding.allow_logo ? 'ok' : '')),
     h('div', { class: 'row between wrap' }, h('h3', { class: 'section' }, t('plat.admins')), button(t('plat.addAdmin'), () => guard(() => addAdmin(again)), 'btn small')),
     table([t('mem.email'), t('common.date'), ''],
       (admins || []).map((a) => [h('span', { class: 'ltr' }, a.email), fmtDate(a.created_at),
@@ -120,4 +127,18 @@ async function removeAdmin(a, again) {
   if (!(await confirmBox(t('plat.removeAdminConfirm', { email: a.email })))) return;
   await rpc('platform_remove_admin', { p_user: a.user_id });
   toast(t('plat.saved'), 'ok'); again();
+}
+
+async function editBranding(b, again) {
+  const yesNo = [{ value: 'yes', label: t('plat.on') }, { value: 'no', label: t('plat.off') }];
+  const ok = await openForm({
+    title: t('plat.branding'),
+    fields: [
+      { name: 'palette', label: t('plat.palette'), type: 'textarea', required: true, value: (b.palette || []).join(' '), dir: 'ltr', maxlength: 200 },
+      { name: 'custom', label: t('plat.allowCustom'), type: 'select', required: true, value: b.allow_custom ? 'yes' : 'no', options: yesNo },
+      { name: 'logo', label: t('plat.allowLogo'), type: 'select', required: true, value: b.allow_logo ? 'yes' : 'no', options: yesNo },
+    ],
+    onSubmit: (v) => rpc('platform_set_branding', { p_palette: v.palette.toLowerCase().split(/[\s,]+/).filter(Boolean), p_allow_custom: v.custom === 'yes', p_allow_logo: v.logo === 'yes' }),
+  });
+  if (ok) { resetBrandingOptions(); toast(t('plat.saved'), 'ok'); again(); }
 }
