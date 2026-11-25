@@ -17,8 +17,7 @@ export async function render(box, ctx) {
   box.append(h('div', { class: 'hero' },
     avatar(me.member.photo_path, me.member.full_name, 'lg'), h('div', { class: 'muted' }, t('m.hello')), h('h2', null, me.member.full_name), h('div', { class: 'muted ltr' }, `${t('m.memberNo')} #${me.member.member_no}`),
     active ? h('div', { class: 'big' }, `${t('m.validUntil')} ${fmtDate(active.ends_on)}`) : h('div', { class: 'big' }, t('m.noActive')),
-    last && last[0] ? h('div', { class: 'muted small', style: null }, `${t('m.lastVisit')}: ${fmtDateTime(last[0].checked_in_at)}`) : null),
-    h('div', { class: 'row', style: null }, h('button', { class: 'btn primary block', type: 'button', onClick: () => ctx.goto('scan') }, t('m.scanTitle'))));
+    last && last[0] ? h('div', { class: 'muted small', style: null }, `${t('m.lastVisit')}: ${fmtDateTime(last[0].checked_in_at)}`) : null));
   const { data: reqs } = await sb.from('freeze_requests').select('id, status, kind, requested_at').eq('member_id', me.member.id).order('requested_at', { ascending: false }).limit(1);
   const req = reqs && reqs[0];
   const pending = req && req.status === 'pending';
