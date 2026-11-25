@@ -312,6 +312,8 @@ export const en = {
   'err.throttled': 'Too many attempts, please wait a moment', 'err.invalid': 'Invalid data', 'err.amount': 'Invalid amount',
   'mem.profile': 'Member profile', 'prof.info': 'Details', 'prof.joined': 'Joined', 'prof.birth': 'Date of birth', 'prof.subs': 'Subscriptions', 'prof.from': 'From', 'prof.to': 'To', 'prof.access': 'Entries and exits',
   'cam.title': 'Take a photo', 'cam.capture': 'Capture', 'cam.file': 'Choose a file', 'cam.none': 'No camera available',
+  'tab.review': 'Registration review', 'rv.title': 'Registrations awaiting review', 'rv.help': 'Members registered by staff. Review them at the end of the day or week, then approve.', 'rv.period': 'Period', 'rv.today': 'Today', 'rv.week': 'Last 7 days', 'rv.none': 'No registrations awaiting review', 'rv.by': 'Registered by', 'rv.approve': 'Approve', 'rv.approveAll': 'Approve all', 'rv.done': 'Approved', 'rv.pending': 'Awaiting review',
+  'inv.invoice': 'Invoice',
   'mem.more': 'More', 'mem.invite': 'App link code', 'mem.inviteTitle': 'Member account link code',
   'mem.inviteHelp': 'Give this code to the member. They enter it once in their app within 7 days. It will not be shown again.',
   'm.tab.home': 'Home','m.tab.events': 'Events', 'm.tab.invoices': 'My invoices', 'm.tab.chat': 'Chat',

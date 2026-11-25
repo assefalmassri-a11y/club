@@ -285,7 +285,7 @@ export async function render(box, ctx) {
 
   async function load() {
     clear(list);
-    let q = scoped(sb.from('members').select('id, member_no, full_name, phone, email, status, branch_id, discount_pct, photo_path').order('full_name').limit(100));
+    let q = scoped(sb.from('members').select('id, member_no, full_name, phone, email, status, branch_id, discount_pct, photo_path, review_status').order('full_name').limit(100));
     const term = search.value.trim().replace(/[%_\\,()]/g, ' ');
     if (/^\d{1,9}$/.test(term)) q = q.or(`member_no.eq.${term},phone.ilike.%${term}%`);
     else if (term) q = q.ilike('full_name', `%${term}%`);
@@ -302,7 +302,7 @@ export async function render(box, ctx) {
     const body = members.map((m) => h('tr', null,
       h('td', { 'data-label': t('mem.name') }, h('div', { class: 'row gap' }, avatar(m.photo_path, m.full_name, 'sm'), h('div', null, h('strong', null, m.full_name), h('div', { class: 'muted small ltr' }, `#${m.member_no}${m.phone ? ` · ${m.phone}` : ''}`)))),
       h('td', { 'data-label': t('common.branch') }, branchName(m.branch_id)),
-      h('td', { 'data-label': t('common.status') }, badge(t(`mem.status.${m.status}`), STATUS_KIND[m.status])),
+      h('td', { 'data-label': t('common.status') }, h('span', { class: 'row gap' }, badge(t(`mem.status.${m.status}`), STATUS_KIND[m.status]), m.review_status === 'pending' ? badge(t('rv.pending'), 'warn') : null)),
       h('td', { 'data-label': t('mem.membership') }, until.has(m.id) ? `${t('mem.until')} ${fmtDate(until.get(m.id))}` : h('span', { class: 'muted' }, t('mem.noMembership'))),
       h('td', { class: 'actions', 'data-label': t('common.actions') },
         button(t('mem.checkin'), () => guard(async () => {

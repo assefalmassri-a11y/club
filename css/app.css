@@ -132,6 +132,7 @@ ul.plain{list-style:none;padding:0;margin:.5rem 0}ul.plain li{padding:.5rem 0;bo
 
 /* Membership ID card + print */
 .id-card{border:1px solid var(--border,#d6dbe3);border-radius:14px;padding:1rem 1.25rem;text-align:center;background:#fff;color:#0f172a;max-width:340px;margin:0 auto 1rem}
+.invoice-doc{max-width:480px;text-align:start}.invoice-doc .id-name,.invoice-doc .id-club,.invoice-doc>.muted{text-align:center}
 .id-club{font-weight:600;color:#0f766e;margin-bottom:.5rem}
 .id-name{font-size:1.2rem;font-weight:700}
 .id-no{font-size:1.6rem;font-weight:800;letter-spacing:.06em;margin:.35rem 0 .75rem}

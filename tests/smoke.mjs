@@ -115,6 +115,36 @@ for (const [name, admin, wantTab] of [['platform admin', true, true], ['owner', 
   await ctx.close();
 }
 
+// Invoice print works for an unpaid invoice too.
+{
+  const { ctx, page, errors } = await open();
+  await page.goto(`${base}/`);
+  await page.waitForSelector('nav button[data-tab="invoices"]');
+  await page.evaluate(() => document.querySelector('nav button[data-tab="invoices"]').click());
+  await page.waitForSelector('.view tbody tr button');
+  await page.locator('.view tbody tr button', { hasText: /طباعة|Print/ }).first().click();
+  const text = await page.$eval('.invoice-doc', (e) => e.innerText);
+  if (!/INV-1|1/.test(text) || !/فاتورة|Invoice/.test(text) || errors.length) fail(`invoice print: ${text} ${errors}`);
+  else console.log('ok invoice print');
+  await ctx.close();
+}
+
+// Manager reviews members registered by staff and approves them.
+{
+  const init = `window.__RPC.members_pending_review=[{id:'m1',member_no:1001,full_name:'Ahmad Test',phone:'0700',branch_id:'b1',created_at:new Date().toISOString(),created_by_email:'desk@x.com'}];window.__RPC.approve_members=1;`;
+  const { ctx, page, errors } = await open(init);
+  await page.goto(`${base}/`);
+  await page.waitForSelector('nav button[data-tab="review"]');
+  await page.evaluate(() => document.querySelector('nav button[data-tab="review"]').click());
+  await page.waitForSelector('.view tbody tr');
+  await page.locator('.view tbody button', { hasText: /اعتماد|Approve/ }).first().click();
+  await page.waitForTimeout(400);
+  const calls = await page.evaluate(() => window.__CALLS.filter((c) => c.rpc === 'approve_members'));
+  if (!calls.length || calls[0].args.p_ids[0] !== 'm1' || errors.length) fail(`review: ${JSON.stringify(calls)} ${errors}`);
+  else console.log('ok registration review');
+  await ctx.close();
+}
+
 // Member profile opens with details, subscriptions, entries and invoices.
 {
   const { ctx, page, errors } = await open();

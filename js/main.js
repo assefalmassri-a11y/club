@@ -9,6 +9,7 @@ import { icon } from './icons.js';
 
 import * as overview from './views/overview.js';
 import * as members from './views/members.js';
+import * as review from './views/review.js';
 import * as invoices from './views/invoices.js';
 import * as events from './views/events.js';
 import * as chat from './views/chat.js';
@@ -36,6 +37,7 @@ const TABS = [
   { id: 'coach', g: 'main', view: coach, roles: ['trainer'] },
   { id: 'reception', g: 'main', view: reception, roles: ['owner', 'branch_manager', 'staff'] },
   { id: 'members', g: 'people', view: members, roles: ['owner', 'branch_manager', 'staff'] },
+  { id: 'review', g: 'people', view: review, roles: ['owner', 'branch_manager'] },
   { id: 'invoices', g: 'people', view: invoices, roles: ['owner', 'branch_manager', 'staff'] },
   { id: 'clients', g: 'people', view: clients, roles: ['owner', 'branch_manager'] },
   { id: 'events', g: 'people', view: events, roles: ['owner', 'branch_manager', 'trainer', 'staff'] },

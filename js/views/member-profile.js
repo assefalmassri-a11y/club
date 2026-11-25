@@ -4,6 +4,7 @@ import { state } from '../state.js';
 import { h, clear, badge, button, fmtDate, fmtDateTime, fmtMoney, reasonText, guard } from '../dom.js';
 import { t } from '../i18n.js';
 import { avatar } from '../photo.js';
+import { showInvoice } from './invoices.js';
 
 const STATUS_KIND = { active: 'ok', frozen: 'warn', expired: 'bad', cancelled: 'bad', paused: 'warn' };
 const branchName = (id) => (state.branches.find((b) => b.id === id) || {}).name || t('common.none');
@@ -46,7 +47,7 @@ export async function openMemberProfile(member) {
       sb.from('members').select('full_name, phone, email, birth_date, status, joined_at, branch_id, discount_pct').eq('id', member.id).single(),
       sb.from('memberships').select('id, plan_id, starts_on, ends_on, status, price_cents, currency, membership_plans(name)').eq('member_id', member.id).order('starts_on', { ascending: false }).limit(20),
       sb.from('door_attempts').select('id, door_id, direction, granted, reason, method, created_at').eq('member_id', member.id).order('created_at', { ascending: false }).limit(40),
-      sb.from('invoices').select('id, number, label, amount_minor, currency, due_date, status').eq('member_id', member.id).order('number', { ascending: false }).limit(20),
+      sb.from('invoices').select('id, number, label, amount_minor, currency, issue_date, due_date, status, paid_on, payment_method').eq('member_id', member.id).order('number', { ascending: false }).limit(20),
       sb.from('doors').select('id, name'),
     ]);
     if (error) throw error;
@@ -67,8 +68,9 @@ export async function openMemberProfile(member) {
       section(t('prof.access'), table([t('common.date'), t('door.name'), t('door.direction'), t('door.method'), t('common.status')],
         (att || []).map((a) => [fmtDateTime(a.created_at), door.get(a.door_id) || '', t(a.direction === 'exit' ? 'door.exit' : 'door.entry'), a.method || '',
           badge(a.granted ? t('door.granted') : `${t('door.denied')}: ${reasonText(a.reason)}`, a.granted ? 'ok' : 'bad')]))),
-      section(t('inv.title'), table([t('inv.number'), t('inv.label'), t('inv.amount'), t('inv.dueDate'), t('common.status')],
+      section(t('inv.title'), table([t('inv.number'), t('inv.label'), t('inv.amount'), t('inv.dueDate'), t('common.status'), ''],
         (invs || []).map((i) => [String(i.number), i.label || '', h('bdi', null, fmtMoney(i.amount_minor, String(i.currency).trim())), fmtDate(i.due_date),
-          badge(t(`inv.status.${i.status}`), i.status === 'paid' ? 'ok' : 'warn')]))));
+          badge(t(`inv.status.${i.status}`), i.status === 'paid' ? 'ok' : 'warn'),
+          button(t('mem.print'), () => showInvoice(i, member.full_name), 'btn small')]))));
   });
 }
