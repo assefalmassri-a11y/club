@@ -78,38 +78,6 @@ for (const [name, admin, wantTab] of [['platform admin', true, true], ['owner', 
   await ctx.close();
 }
 
-// Member opens a door from the app: control shows for doors with a location and sends the GPS position.
-{
-  const init = `window.__RPC.my_doors=[{id:'d1',name:'Main door',direction:'in',branch_id:'b1',has_location:true}];window.__RPC.open_door_nearby=[{granted:true,reason:'ok'}];` +
-    `navigator.geolocation.getCurrentPosition=(ok)=>ok({coords:{latitude:55.6,longitude:13,accuracy:10}});`;
-  const { ctx, page, errors } = await open(init);
-  await page.goto(`${base}/member/`);
-  await page.waitForSelector('.nav button[data-tab]');
-  const btn = page.locator('button', { hasText: /افتح الباب|Open the door/ });
-  await btn.first().waitFor({ timeout: 8000 });
-  await btn.first().click();
-  await page.waitForTimeout(400);
-  const calls = await page.evaluate(() => window.__CALLS.filter((c) => c.rpc === 'open_door_nearby'));
-  const a = calls[0] && calls[0].args;
-  if (!a || a.p_door_id !== 'd1' || a.p_lat !== 55.6 || a.p_accuracy !== 10 || errors.length) fail(`open door: ${JSON.stringify(calls)} ${errors}`);
-  else console.log('ok member opens door nearby');
-  await ctx.close();
-}
-
-// Staff doors tab shows the location column.
-{
-  const { ctx, page, errors } = await open(`window.__DB.doors=[{id:'d1',club_id:'c1',branch_id:'b1',name:'Main door',active:true,direction:'in',lat:55.6,lng:13,radius_m:40,created_at:'2026-01-01'}];`);
-  await page.goto(`${base}/`);
-  await page.waitForSelector('nav button[data-tab="doors"]');
-  await page.evaluate(() => document.querySelector('nav button[data-tab="doors"]').click());
-  await page.waitForTimeout(400);
-  const head = await page.$$eval('.view thead th', (e) => e.map((x) => x.textContent.trim()).join('|'));
-  const hasBtn = (await page.locator('.view button', { hasText: /تحديد موقع الباب|Set door location/ }).count()) > 0;
-  if (!/الموقع|Location/.test(head) || errors.length) fail(`doors location column: ${head} ${errors}`);
-  else console.log(`ok staff doors location column (set button: ${hasBtn})`);
-  await ctx.close();
-}
-
 // Sign-in screens link to the legal pages, and those pages load.
 for (const app of ['/', '/member/']) {
   const { ctx, page, errors } = await open('window.__NOSESSION = true');

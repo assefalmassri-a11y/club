@@ -1,4 +1,4 @@
-> Historical feature log. Changes since: the member door PIN, the Code 39 barcode and all QR entry were removed (entry is by RFID/Mifare/NFC cards); phase 18 proximity opening (member app control + staff door-location setup) uses `open_door_nearby`/`set_door_location`; phase 19 added club subscriptions. Current structure: see README.md and docs/ARCHITECTURE.md.
+> Historical feature log. Changes since: the member door PIN, the Code 39 barcode and all QR entry were removed (entry is by RFID/Mifare/NFC cards); phase 18 proximity (GPS) opening was removed in phase 21 (cards only); phase 19 added club subscriptions. Current structure: see README.md and docs/ARCHITECTURE.md.
 
 # Club
 

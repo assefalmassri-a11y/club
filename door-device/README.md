@@ -22,7 +22,3 @@ DOOR_ID=<uuid> DOOR_SECRET=<secret> RELAY_MODE=shelly SHELLY_URL=http://192.168.
 
 ## الحالة
 اختُبر محلياً: خادم النقر المحلي يعمل. (الدخول بالكروت فقط.) لم يُختبر مع باب/ريليه/قارئ حقيقي ولا مع الوسيط بباب فعلي.
-
-## Opening from the app (no device software needed)
-
-Members can also open a door from the member app when they are near it. This needs no extra software on the door device: the app calls `open_door_nearby`, which creates the same open command the device already relays. Staff enable it per door in the Doors tab by standing at the door and pressing "Set door location".
