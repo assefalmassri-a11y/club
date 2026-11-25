@@ -1,5 +1,5 @@
 import { sb } from '../supa.js';
-import { h, clear, openForm, toast, fmtDate, button, badge } from '../dom.js';
+import { h, openForm, toast, fmtDate, button, badge } from '../dom.js';
 import { t } from '../i18n.js';
 
 const PLANS = ['starter', 'pro', 'unlimited'];

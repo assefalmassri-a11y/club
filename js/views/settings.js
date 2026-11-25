@@ -1,6 +1,6 @@
 import { sb } from '../supa.js';
 import { state } from '../state.js';
-import { h, button, openForm, toast, guard, errText } from '../dom.js';
+import { h, button, openForm, toast, guard } from '../dom.js';
 import { t } from '../i18n.js';
 import { pushControl } from '../push.js';
 import { langControl } from '../lang.js';

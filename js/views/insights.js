@@ -1,7 +1,7 @@
 // Class ratings report and stored monthly reports.
 import { sb } from '../supa.js';
 import { state } from '../state.js';
-import { h, clear, button, toast, guard, fmtMoney, fmtDateTime, openForm } from '../dom.js';
+import { h, clear, button, toast, guard, fmtMoney, fmtDateTime } from '../dom.js';
 import { t, locale } from '../i18n.js';
 
 export async function openRatings() {

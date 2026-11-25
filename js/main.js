@@ -1,7 +1,7 @@
 import { sb } from './supa.js';
 import { gate, handleRecovery } from './auth.js';
 import { installErrorLog } from './errlog.js';
-import { state, canManage, isFrontDesk } from './state.js';
+import { state } from './state.js';
 import { h, clear, spinner, toast, errText, openForm } from './dom.js';
 import { t, initLang } from './i18n.js';
 import { initTheme } from './theme.js';

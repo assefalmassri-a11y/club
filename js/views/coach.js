@@ -1,7 +1,7 @@
 // Trainer workspace: own classes (attendance) and own assigned clients (plan, measurements, chat).
 import { sb } from '../supa.js';
 import { state } from '../state.js';
-import { h, clear, button, guard, fmtDateTime, fmtDate, badge } from '../dom.js';
+import { h, button, guard, fmtDateTime, fmtDate, badge } from '../dom.js';
 import { t } from '../i18n.js';
 import { avatar } from '../photo.js';
 import { openAttendance } from './events.js';

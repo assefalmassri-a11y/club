@@ -1,5 +1,5 @@
 import { sb } from '../supa.js';
-import { state, scoped, canManage } from '../state.js';
+import { state, scoped } from '../state.js';
 import { h, clear, badge, button, openForm, toast, guard, fmtDateTime } from '../dom.js';
 import { t } from '../i18n.js';
 

@@ -1,7 +1,7 @@
 // Per-trainer report (owner only): classes, attendance, rating, PT sessions, clients and salary on one page.
 import { sb } from '../supa.js';
 import { state, currency } from '../state.js';
-import { h, clear, button, guard, fmtMoney, fmtDateTime, decimals } from '../dom.js';
+import { h, clear, button, guard, fmtMoney, fmtDateTime } from '../dom.js';
 import { t } from '../i18n.js';
 import { downloadCsv } from '../csv.js';
 

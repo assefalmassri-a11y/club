@@ -1,7 +1,7 @@
 // Static checks, no dependencies:  node scripts/check.mjs
 //  1. syntax of every .js/.mjs file (ES module mode)
 //  2. Arabic and English dictionaries have the same keys
-//  3. reports unused i18n keys and unreferenced source files (warnings only)
+//  3. reports unused i18n keys, unreferenced source files and unused imports (warnings only)
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -40,6 +40,16 @@ for (const f of code) {
   if (ENTRY.has(rel) || rel.startsWith('scripts/') || rel.startsWith('tests/')) continue;
   const b = basename(f);
   if (!files.some((g) => g !== f && new RegExp(`/${b.replace('.', '\\.')}'`).test(text(g)))) console.warn(`warn: unreferenced file ${rel}`);
+}
+
+for (const f of code) {
+  const src = text(f);
+  for (const m of src.matchAll(/import\s*\{([^}]*)\}\s*from/g)) {
+    for (const raw of m[1].split(',')) {
+      const name = raw.trim().split(/\s+as\s+/).pop();
+      if (name && (src.match(new RegExp(`\\b${name}\\b`, 'g')) || []).length < 2) console.warn(`warn: unused import ${name} in ${f.slice(ROOT.length)}`);
+    }
+  }
 }
 
 console.log(failed ? 'check FAILED' : `check ok (${code.length} files, ${ar.size} i18n keys)`);
