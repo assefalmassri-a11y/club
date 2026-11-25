@@ -1,4 +1,4 @@
-> Historical feature log. Changes since: the member door PIN, the Code 39 barcode and all QR entry were removed (entry is by RFID/Mifare/NFC cards); phase 18 proximity (GPS) opening was removed in phase 21 (cards only); phase 19 added club subscriptions. Current structure: see README.md and docs/ARCHITECTURE.md.
+> Historical feature log. Changes since: the member door PIN, the Code 39 barcode and all QR entry were removed (entry is by RFID/Mifare/NFC cards); phase 18 proximity (GPS) opening was removed in phase 21 (cards only); phase 19 added club subscriptions; phase 23 gave the platform owner full control (club details, permanent club delete, plans, platform admins, platform log). Current structure: see README.md and docs/ARCHITECTURE.md.
 
 # Club
 

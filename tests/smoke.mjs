@@ -63,6 +63,25 @@ for (const [name, admin, wantTab] of [['platform admin', true, true], ['owner', 
   await ctx.close();
 }
 
+// Platform console shows clubs, plans, admins and the log with a delete action.
+{
+  const init = `window.__RPC.is_platform_admin=true;window.__RPC.my_club_subscription=${JSON.stringify(sub)};` +
+    `window.__RPC.platform_list_clubs=[{club_id:'c9',name:'Alpha Gym',slug:'alpha',plan_code:'starter',status:'trial',trial_ends_on:'2026-12-05',current_period_end:null,notes:null,branches:1,members:3}];` +
+    `window.__RPC.platform_list_plans=[{code:'starter',name:'Starter',max_branches:1,max_members:100,price_cents:null,currency:null,active:true}];` +
+    `window.__RPC.platform_list_admins=[{user_id:'u1',email:'owner@x.com',created_at:'2026-11-25T10:00:00Z'}];` +
+    `window.__RPC.platform_list_log=[{at:'2026-11-25T10:00:00Z',actor_email:'owner@x.com',club_id:null,action:'save_plan',detail:{}}];`;
+  const { ctx, page, errors } = await open(init);
+  await page.goto(`${base}/`);
+  await page.waitForSelector('nav button[data-tab="platform"]');
+  await page.evaluate(() => document.querySelector('nav button[data-tab="platform"]').click());
+  await page.waitForSelector('.view h3.section');
+  const text = await page.$eval('.view', (e) => e.innerText);
+  const del = await page.locator('.view button', { hasText: /حذف النادي|Delete club/ }).count();
+  if (!/Alpha Gym/.test(text) || !/owner@x.com/.test(text) || del !== 1 || errors.length) fail(`platform console: del=${del} ${errors}`);
+  else console.log('ok platform console');
+  await ctx.close();
+}
+
 // Member card print has name and number, no barcode.
 {
   const { ctx, page, errors } = await open();
