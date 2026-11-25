@@ -43,6 +43,9 @@ export function errText(e) {
   return `${t('err.generic')}: ${m}`.slice(0, 240);
 }
 
+// Text for a door access result code (m.reason.*); unknown codes are shown as they are.
+export function reasonText(r) { const k = `m.reason.${r}`; return t(k) === k ? String(r || t('m.reason.other')) : t(k); }
+
 export async function guard(fn) {
   try { return await fn(); } catch (e) { toast(errText(e), 'error'); return undefined; }
 }
