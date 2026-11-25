@@ -1,7 +1,7 @@
 # Deployment
 
 ## Hosting
-Upload the folder (without `door-device/`, `tests/`, `scripts/`, `supabase/`, `docs/`) to any HTTPS static host (GitHub Pages today). For a commercial launch use your own domain and a separate staging project.
+Upload the folder (without `door-device/`, `tests/`, `scripts/`, `supabase/`, `docs/`; keep `privacy.html` and `terms.html`, which are templates to complete and have reviewed by a lawyer) to any HTTPS static host (GitHub Pages today). For a commercial launch use your own domain and a separate staging project.
 
 ## One-time Supabase settings (dashboard, cannot be set from SQL)
 - Authentication: enable Confirm email; keep Anonymous sign-ins off; enable MFA (TOTP), CAPTCHA, leaked-password protection and a minimum password length.

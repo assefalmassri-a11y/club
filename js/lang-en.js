@@ -22,6 +22,7 @@ export const en = {
   'mem.print': 'Print',
   'tab.reception': "Reception",
   'tab.audit': "Audit log",
+  'legal.privacy': 'Privacy policy', 'legal.terms': 'Terms of use',
   'rec.title': "Inside now",
   'rec.noSub': "No active membership",
   'rec.overdue': "Overdue invoices",

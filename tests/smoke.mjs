@@ -110,6 +110,18 @@ for (const [name, admin, wantTab] of [['platform admin', true, true], ['owner', 
   await ctx.close();
 }
 
+// Sign-in screens link to the legal pages, and those pages load.
+for (const app of ['/', '/member/']) {
+  const { ctx, page, errors } = await open('window.__NOSESSION = true');
+  await page.goto(`${base}${app}`);
+  await page.waitForSelector('.auth-card form');
+  const hrefs = await page.$$eval('.auth-card a[href$=".html"]', (a) => a.map((x) => x.pathname));
+  if (hrefs.join() !== '/privacy.html,/terms.html' || errors.length) fail(`${app} legal links: ${hrefs} ${errors}`);
+  for (const h of hrefs) { const r = await page.request.get(`${base}${h}`); if (r.status() !== 200) fail(`${h} -> ${r.status()}`); }
+  console.log(`ok ${app} sign-in legal links`);
+  await ctx.close();
+}
+
 await browser.close(); server.close();
 console.log(failures ? `${failures} FAILED` : 'all smoke tests passed');
 process.exit(failures ? 1 : 0);
