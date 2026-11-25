@@ -1,4 +1,5 @@
 import { calendarTerm } from '../billing.js';
+import { logoImg } from '../brand.js';
 import { sb } from '../supa.js';
 import { state, scoped, canManage } from '../state.js';
 import { h, clear, badge, button, openForm, toast, guard, fmtDate, fmtMoney, today, addDays, decimals, confirmBox } from '../dom.js';
@@ -234,6 +235,7 @@ async function anonymize(member) {
 function printCard(member) {
   const overlay = h('div', { class: 'overlay print-overlay' });
   const card = h('div', { class: 'id-card' },
+    logoImg(state.club),
     h('div', { class: 'id-club' }, state.club.name),
     h('div', { class: 'id-name' }, member.full_name),
     h('div', { class: 'id-no ltr' }, `#${member.member_no}`));

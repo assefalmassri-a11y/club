@@ -1,4 +1,5 @@
 import { sb } from '../supa.js';
+import { logoImg } from '../brand.js';
 import { state, scoped, canManage, currency } from '../state.js';
 import { h, clear, badge, button, openForm, toast, guard, fmtDate, fmtMoney, toMinor, today, endOfMonth } from '../dom.js';
 import { t } from '../i18n.js';
@@ -49,6 +50,7 @@ export function showInvoice(inv, memberName) {
   const kv = (k, v) => h('div', { class: 'kv' }, h('span', { class: 'muted' }, k), h('strong', null, v));
   const paid = inv.status === 'paid';
   const card = h('div', { class: 'id-card receipt invoice-doc' },
+    logoImg(state.club),
     h('div', { class: 'id-club' }, state.club.name),
     h('div', { class: 'muted' }, paid ? t('inv.receipt') : t('inv.invoice')),
     h('div', { class: 'id-name' }, memberName || ''),

@@ -6,11 +6,14 @@ import { pushControl } from '../push.js';
 import { langControl } from '../lang.js';
 import { themeControl } from '../theme.js';
 import { loadRates, clearRates } from '../fx.js';
+import { brandingSection } from './branding.js';
 
 export async function render(box) {
   const branchesEl = h('div', { class: 'list-simple' });
   const isOwner = state.role === 'owner';
   const fxEl = h('div', { class: 'list-simple' });
+
+  const brandEl = isOwner ? await brandingSection() : null;
 
   box.append(h('h2', null, t('set.title')),
     h('h3', { class: 'section' }, t('set.club')),
@@ -18,6 +21,7 @@ export async function render(box) {
       h('div', { class: 'item' }, h('span', { class: 'muted' }, t('ctx.clubName')), h('strong', null, state.club.name)),
       h('div', { class: 'item' }, h('span', { class: 'muted' }, t('set.currency')), h('strong', null, state.club.default_currency.trim())),
       h('div', { class: 'item' }, h('span', { class: 'muted' }, t('set.timezone')), h('strong', { class: 'ltr' }, state.club.timezone || ''))),
+    brandEl,
     isOwner ? h('div', { class: 'row between wrap section' }, h('h3', null, t('fx.title')), button(t('fx.set'), async () => { if (await guard(setFx)) { clearRates(); await drawFx(); } }, 'btn small primary')) : null,
     isOwner ? fxEl : null,
     h('div', { class: 'row between wrap section' }, h('h3', null, t('set.branches')),

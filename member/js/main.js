@@ -1,4 +1,5 @@
 import { sb } from '../../js/supa.js';
+import { applyBrand } from '../../js/brand.js';
 import { state } from '../../js/state.js';
 import { h, clear, spinner, toast, errText } from '../../js/dom.js';
 import { t, initLang } from '../../js/i18n.js';
@@ -90,9 +91,10 @@ async function loadMe() {
   if (error) throw error;
   if (!ms || !ms.length) return false;
   me.member = ms[0];
-  const { data: club, error: ce } = await sb.from('clubs').select('id, name, default_currency').eq('id', me.member.club_id).single();
+  const { data: club, error: ce } = await sb.from('clubs').select('id, name, default_currency, brand_color, logo_path').eq('id', me.member.club_id).single();
   if (ce) throw ce;
   me.club = club;
+  applyBrand(club);
   state.club = club; state.role = 'member'; state.branches = []; state.branchId = null;
   return true;
 }

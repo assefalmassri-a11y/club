@@ -1,4 +1,5 @@
 import { sb } from '../../js/supa.js';
+import { logoImg } from '../../js/brand.js';
 import { h, badge, fmtDate, fmtDateTime, fmtMoney, today, openForm, toast, guard, confirmBox, button } from '../../js/dom.js';
 import { t } from '../../js/i18n.js';
 import { me } from './ctx.js';
@@ -15,6 +16,7 @@ export async function render(box, ctx) {
   ]);
   const active = ms && ms[0];
   box.append(h('div', { class: 'hero' },
+    logoImg(me.club, 'hero-logo'),
     avatar(me.member.photo_path, me.member.full_name, 'lg'), h('div', { class: 'muted' }, t('m.hello')), h('h2', null, me.member.full_name), h('div', { class: 'muted ltr' }, `${t('m.memberNo')} #${me.member.member_no}`),
     active ? h('div', { class: 'big' }, `${t('m.validUntil')} ${fmtDate(active.ends_on)}`) : h('div', { class: 'big' }, t('m.noActive')),
     last && last[0] ? h('div', { class: 'muted small', style: null }, `${t('m.lastVisit')}: ${fmtDateTime(last[0].checked_in_at)}`) : null));

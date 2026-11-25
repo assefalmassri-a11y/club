@@ -5,17 +5,35 @@ import { t } from './i18n.js';
 
 const MAX = 1024;
 
-async function toJpeg(file) {
+async function resize(file, max, type, quality) {
   if (!/^image\//.test(file.type)) throw new Error('not an image');
   const bmp = await createImageBitmap(file);
-  const k = Math.min(1, MAX / Math.max(bmp.width, bmp.height));
+  const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
   const c = document.createElement('canvas');
   c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
   c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
   bmp.close && bmp.close();
-  const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.86));
+  const blob = await new Promise((r) => c.toBlob(r, type, quality));
   if (!blob) throw new Error('encode failed');
   return blob;
+}
+const toJpeg = (file) => resize(file, MAX, 'image/jpeg', 0.86);
+
+// Club logo: PNG (keeps transparency) at <club>/logo.png, then registered through the owner-only RPC.
+export async function uploadClubLogo(clubId, file) {
+  const blob = await resize(file, 512, 'image/png');
+  const path = `${clubId}/logo.png`;
+  const { error } = await sb.storage.from('club-logos').upload(path, blob, { contentType: 'image/png', upsert: true });
+  if (error) throw error;
+  const { error: e2 } = await sb.rpc('set_club_logo', { p_club: clubId, p_path: path });
+  if (e2) throw e2;
+  cache.delete('club-logos|' + path);
+  return path;
+}
+export async function removeClubLogo(clubId) {
+  const { error } = await sb.rpc('set_club_logo', { p_club: clubId, p_path: null });
+  if (error) throw error;
+  await sb.storage.from('club-logos').remove([`${clubId}/logo.png`]);
 }
 
 export async function uploadPhoto(clubId, memberId, file) {
@@ -41,6 +59,7 @@ export async function uploadEquipmentPhoto(clubId, equipmentId, file) {
 }
 
 const cache = new Map();
+export async function signedUrl(path, bucket) { return photoUrl(path, bucket); }
 async function photoUrl(path, bucket = 'member-photos') {
   const key = bucket + '|' + path;
   const hit = cache.get(key);

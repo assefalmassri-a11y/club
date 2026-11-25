@@ -145,6 +145,23 @@ for (const [name, admin, wantTab] of [['platform admin', true, true], ['owner', 
   await ctx.close();
 }
 
+// Club branding: the club colour is applied, and the owner can pick a palette colour in Settings.
+{
+  const init = `window.__DB.clubs[0].brand_color='#4f46e5';window.__RPC.branding_options={palette:['#0d9488','#4f46e5'],allow_custom:true,allow_logo:true};`;
+  const { ctx, page, errors } = await open(init);
+  await page.goto(`${base}/`);
+  await page.waitForSelector('nav button[data-tab="settings"]');
+  const pri = await page.evaluate(() => document.documentElement.style.getPropertyValue('--pri'));
+  await page.evaluate(() => document.querySelector('nav button[data-tab="settings"]').click());
+  await page.waitForSelector('.swatch');
+  await page.locator('.swatch').first().click();
+  await page.waitForTimeout(400);
+  const calls = await page.evaluate(() => window.__CALLS.filter((c) => c.rpc === 'set_club_color'));
+  if (pri !== '#4f46e5' || !calls.length || calls[0].args.p_color !== '#0d9488' || errors.length) fail(`branding: pri=${pri} calls=${JSON.stringify(calls)} ${errors}`);
+  else console.log('ok club branding');
+  await ctx.close();
+}
+
 // Member profile opens with details, subscriptions, entries and invoices.
 {
   const { ctx, page, errors } = await open();
