@@ -11,7 +11,7 @@ const mock = readFileSync(here('mock-supabase.js'), 'utf8');
 const seed = readFileSync(here('seed.js'), 'utf8');
 const server = await serve(0);
 const base = `http://localhost:${server.address().port}`;
-const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || undefined, args: ['--no-sandbox'] });
+const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || undefined, args: ['--no-sandbox', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
 let failures = 0;
 
 async function open(init) {
@@ -94,6 +94,24 @@ for (const [name, admin, wantTab] of [['platform admin', true, true], ['owner', 
   const text = await page.$eval('.id-card', (e) => e.innerText);
   if (!/#1001/.test(text) || (await page.$('.id-card svg')) || errors.length) fail(`member card: ${text} ${errors}`);
   else console.log('ok member card print');
+  await ctx.close();
+}
+
+// Photo: on a computer the webcam capture dialog opens and a captured photo is saved.
+{
+  const { ctx, page, errors } = await open();
+  await page.goto(`${base}/`);
+  await page.waitForSelector('nav button[data-tab="members"]');
+  await page.evaluate(() => document.querySelector('nav button[data-tab="members"]').click());
+  await page.waitForSelector('.view tbody tr button');
+  await page.locator('.view tbody tr button', { hasText: /المزيد|More/ }).first().click();
+  await page.locator('.modal button', { hasText: /صورة العضو|Member photo|Photo/ }).first().click();
+  await page.waitForSelector('video.cam-video', { timeout: 8000 });
+  await page.waitForFunction(() => document.querySelector('video.cam-video').videoWidth > 0, null, { timeout: 8000 });
+  await page.locator('.modal button', { hasText: /التقط|Capture/ }).click();
+  await page.waitForTimeout(600);
+  const calls = await page.evaluate(() => window.__CALLS.filter((c) => c.t === 'members' && c.op === 'update').length);
+  if (errors.length || calls < 1) fail(`webcam photo: updates=${calls} ${errors}`); else console.log('ok webcam capture saves the photo');
   await ctx.close();
 }
 

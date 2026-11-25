@@ -18,11 +18,24 @@ function table(heads, rows) {
 const section = (title, body) => h('div', null, h('h3', { class: 'section' }, title), body);
 const field = (label, value) => h('div', null, h('div', { class: 'muted small' }, label), h('div', null, value || h('span', { class: 'muted' }, t('common.none'))));
 
+// Large photo; tap to view it full size.
+function bigAvatar(member) {
+  const box = avatar(member.photo_path, member.full_name, 'xl');
+  box.addEventListener('click', () => {
+    const img = box.querySelector('img');
+    if (!img) return;
+    const full = h('div', { class: 'overlay' }, h('img', { class: 'photo-zoom', alt: member.full_name, src: img.src }));
+    full.addEventListener('click', () => full.remove());
+    document.body.append(full);
+  });
+  return box;
+}
+
 export async function openMemberProfile(member) {
   const overlay = h('div', { class: 'overlay' });
   const body = h('div', { class: 'stack' });
   overlay.append(h('div', { class: 'modal wide' },
-    h('div', { class: 'row gap' }, avatar(member.photo_path, member.full_name, 'sm'),
+    h('div', { class: 'row gap' }, bigAvatar(member),
       h('div', null, h('h2', null, member.full_name), h('div', { class: 'muted small ltr' }, `#${member.member_no}`))),
     body, h('div', { class: 'row end' }, button(t('common.close'), () => overlay.remove(), 'btn primary'))));
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
