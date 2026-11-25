@@ -40,7 +40,7 @@ export async function uploadEquipmentPhoto(clubId, equipmentId, file) {
 }
 
 const cache = new Map();
-export async function photoUrl(path, bucket = 'member-photos') {
+async function photoUrl(path, bucket = 'member-photos') {
   const key = bucket + '|' + path;
   const hit = cache.get(key);
   if (hit && hit.exp > Date.now()) return hit.url;

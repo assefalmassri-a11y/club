@@ -1,0 +1,15 @@
+{
+  "name": "club",
+  "private": true,
+  "version": "0.19.0",
+  "description": "Multi-gym management system (staff dashboard, member app, door device). Static ES modules, no build step.",
+  "type": "module",
+  "scripts": {
+    "serve": "node scripts/serve.mjs",
+    "check": "node scripts/check.mjs",
+    "test": "node tests/smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.50.0"
+  }
+}
