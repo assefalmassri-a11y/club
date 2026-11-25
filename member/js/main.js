@@ -8,7 +8,6 @@ import { showLogin, handleRecovery } from '../../js/auth.js';
 import { installErrorLog } from '../../js/errlog.js';
 import { me } from './ctx.js';
 import * as home from './home.js';
-import * as scan from './scan.js';
 import * as events from './events.js';
 import * as invoices from './invoices.js';
 import * as chat from './chat.js';
@@ -23,7 +22,6 @@ installErrorLog('member');
 const root = document.getElementById('app');
 const TABS = [
   { id: 'home', ic: 'overview', view: home },
-  { id: 'scan', ic: 'qr', view: scan },
   { id: 'events', ic: 'events', view: events },
   { id: 'chat', ic: 'chat', view: chat },
   { id: 'invoices', ic: 'invoices', view: invoices },

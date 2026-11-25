@@ -1,16 +1,12 @@
 // Club door device program (Node 18+, no dependencies).
 // Runs on a Raspberry Pi / mini PC at the door. Responsibilities:
-//  1. Poll the gateway for QR-scan unlock commands and pulse the relay.
+//  1. Poll the gateway for unlock commands (e.g. app proximity) and pulse the relay.
 //  2. Send signed card taps (UIDs read from a local reader) and pulse the relay when allowed.
-//  3. Serve the rotating QR page to the door screen (secret never leaves this process).
 // SAFETY: exit must never depend on this program; keep a mechanical exit / emergency release.
 import http from 'node:http';
 import { createHmac } from 'node:crypto';
-import { readFileSync, existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
 
 const need = (k) => { const v = process.env[k]; if (!v) { console.error(`Missing env ${k}`); process.exit(1); } return v; };
 const DOOR_ID = need('DOOR_ID');
@@ -18,12 +14,9 @@ const SECRET = need('DOOR_SECRET');
 const GATEWAY = (process.env.GATEWAY_URL || 'https://ufpqzisiguofxtubuujs.supabase.co/functions/v1/door-gateway').replace(/\/$/, '');
 const RELAY = process.env.RELAY_MODE || 'log';          // log | shelly | gpio
 const OPEN_MS = Math.min(Number(process.env.OPEN_MS || 3000), 10000);
-const SCREEN_PORT = Number(process.env.SCREEN_PORT || 8098);
 const TAP_PORT = Number(process.env.TAP_PORT || 8099);  // local only: GET /tap?uid=04A1B2C3
-const here = dirname(fileURLToPath(import.meta.url));
 
 const hmacHex = (msg) => createHmac('sha256', SECRET).update(msg).digest('hex');
-export const doorCode = (step) => hmacHex(String(step)).slice(0, 12);
 
 // ---- relay ----
 let relayBusy = false;
@@ -49,7 +42,7 @@ async function post(path, body) {
   return { status: r.status, json: await r.json().catch(() => ({})) };
 }
 
-// ---- QR unlock commands ----
+// ---- unlock commands ----
 async function pollClaim() {
   try {
     const ts = Date.now();
@@ -102,18 +95,4 @@ http.createServer(async (req, res) => {
   } else { res.writeHead(404); res.end(); }
 }).listen(TAP_PORT, '127.0.0.1');
 
-http.createServer((req, res) => {
-  const u = new URL(req.url, 'http://x');
-  if (u.pathname === '/code') {
-    const now = Math.floor(Date.now() / 1000); const step = Math.floor(now / 30);
-    res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
-    res.end(JSON.stringify({ payload: `club1:${DOOR_ID}:${doorCode(step)}`, ttl: 30 - (now % 30) }));
-  } else if (u.pathname === '/' || u.pathname === '/index.html') {
-    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'content-security-policy': "default-src 'self'" });
-    res.end(readFileSync(join(here, 'screen.html')));
-  } else if (u.pathname === '/vendor/qrcode.js' && existsSync(join(here, 'vendor/qrcode.js'))) {
-    res.writeHead(200, { 'content-type': 'text/javascript' }); res.end(readFileSync(join(here, 'vendor/qrcode.js')));
-  } else { res.writeHead(404); res.end(); }
-}).listen(SCREEN_PORT, '127.0.0.1');
-
-console.log(`door ${DOOR_ID} up. screen http://127.0.0.1:${SCREEN_PORT}/  tap http://127.0.0.1:${TAP_PORT}/tap?uid=…  relay=${RELAY}`);
+console.log(`door ${DOOR_ID} up. tap http://127.0.0.1:${TAP_PORT}/tap?uid=…  relay=${RELAY}`);
