@@ -88,6 +88,6 @@ Analytics (staff), coupons, installments, shop/POS, equipment register, personal
 - Per-trainer report for the owner (staff → "Report"): classes, attendance, fill rate, rating, PT sessions, clients, salary; CSV export.
 - Equipment photo (private bucket `equipment-photos`, path `<club>/<id>.jpg`).
 
-## Phase 27
-- Club look and feel (Settings → owner): background tone (7 presets), font (system stacks only), text size, tab style. Live preview, stored on Save (`set_club_theme`, column `clubs.theme`, guarded like the other brand columns).
-- The platform owner can allow or block it (`allow_theme` in `platform_set_branding`). CSS layer at the end of `css/app.css` driven by `data-bg/data-font/data-fsize/data-tabs` set in `js/brand.js`.
+## Phase 27-28
+- Club look and feel: background tone (7 presets), font (system stacks only), text size, tab style. Stored in `clubs.theme`, guarded like the other brand columns.
+- Only the platform owner sets it (Platform tab → club → "Club look", `platform_set_club_theme`); club owners cannot (phase 28 removed `set_club_theme` and the `allow_theme` option). CSS layer at the end of `css/app.css` driven by `data-bg/data-font/data-fsize/data-tabs` set in `js/brand.js`.

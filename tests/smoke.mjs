@@ -68,7 +68,7 @@ for (const [name, admin, wantTab] of [['platform admin', true, true], ['owner', 
   const init = `window.__RPC.is_platform_admin=true;window.__RPC.my_club_subscription=${JSON.stringify(sub)};` +
     `window.__RPC.platform_list_clubs=[{club_id:'c9',name:'Alpha Gym',slug:'alpha',plan_code:'starter',status:'trial',trial_ends_on:'2026-12-05',current_period_end:null,notes:null,branches:1,members:3}];` +
     `window.__RPC.platform_list_plans=[{code:'starter',name:'Starter',max_branches:1,max_members:100,price_cents:null,currency:null,active:true}];` +
-    `window.__RPC.platform_list_admins=[{user_id:'u1',email:'owner@x.com',created_at:'2026-11-25T10:00:00Z'}];` +
+    `window.__RPC.platform_club_detail={theme:{bg:'warm'}};window.__RPC.platform_list_admins=[{user_id:'u1',email:'owner@x.com',created_at:'2026-11-25T10:00:00Z'}];` +
     `window.__RPC.platform_list_log=[{at:'2026-11-25T10:00:00Z',actor_email:'owner@x.com',club_id:null,action:'save_plan',detail:{}}];`;
   const { ctx, page, errors } = await open(init);
   await page.goto(`${base}/`);
@@ -77,7 +77,12 @@ for (const [name, admin, wantTab] of [['platform admin', true, true], ['owner', 
   await page.waitForSelector('.view h3.section');
   const text = await page.$eval('.view', (e) => e.innerText);
   const del = await page.locator('.view button', { hasText: /حذف النادي|Delete club/ }).count();
-  if (!/Alpha Gym/.test(text) || !/owner@x.com/.test(text) || del !== 1 || errors.length) fail(`platform console: del=${del} ${errors}`);
+  await page.locator('.view button', { hasText: /مظهر النادي|Club look/ }).click();
+  await page.locator('.modal select').filter({ has: page.locator('option[value="mint"]') }).selectOption('mint');
+  await page.locator('.modal button[type=submit], .modal .btn.primary').first().click();
+  await page.waitForTimeout(400);
+  const look = await page.evaluate(() => window.__CALLS.filter((c) => c.rpc === 'platform_set_club_theme'));
+  if (!/Alpha Gym/.test(text) || !/owner@x.com/.test(text) || del !== 1 || !look.length || look[0].args.p_bg !== 'mint' || errors.length) fail(`platform console: del=${del} look=${JSON.stringify(look)} ${errors}`);
   else console.log('ok platform console');
   await ctx.close();
 }
@@ -162,21 +167,17 @@ for (const [name, admin, wantTab] of [['platform admin', true, true], ['owner', 
   await ctx.close();
 }
 
-// Club theme: the saved look is applied at start, previews live in Settings and is stored only on Save.
+// Club theme: applied at start for the club; only the platform owner changes it (Platform tab -> club look).
 {
-  const init = `window.__DB.clubs[0].theme={bg:'warm',font:'classic',fsize:'lg',tabs:'pills'};window.__RPC.branding_options={palette:['#0d9488'],allow_custom:false,allow_logo:false,allow_theme:true};`;
+  const init = `window.__DB.clubs[0].theme={bg:'warm',font:'classic',fsize:'lg',tabs:'pills'};window.__RPC.branding_options={palette:['#0d9488'],allow_custom:false,allow_logo:false};`;
   const { ctx, page, errors } = await open(init);
   await page.goto(`${base}/`);
   await page.waitForSelector('nav button[data-tab="settings"]');
   const attrs = await page.evaluate(() => ['data-bg', 'data-font', 'data-fsize', 'data-tabs'].map((a) => document.documentElement.getAttribute(a)).join());
   await page.evaluate(() => document.querySelector('nav button[data-tab="settings"]').click());
-  await page.waitForSelector('select[aria-label]');
-  await page.locator('select').filter({ has: page.locator('option[value="mint"]') }).selectOption('mint');
-  const live = await page.evaluate(() => document.documentElement.getAttribute('data-bg'));
-  await page.locator('.view button', { hasText: /حفظ المظهر|Save look/ }).click();
-  await page.waitForTimeout(400);
-  const calls = await page.evaluate(() => window.__CALLS.filter((c) => c.rpc === 'set_club_theme'));
-  if (attrs !== 'warm,classic,lg,pills' || live !== 'mint' || !calls.length || calls[0].args.p_bg !== 'mint' || calls[0].args.p_tabs !== 'pills' || errors.length) fail(`theme: ${attrs} ${live} ${JSON.stringify(calls)} ${errors}`);
+  await page.waitForTimeout(300);
+  const ownerSees = await page.locator('.view select option[value="mint"]').count();
+  if (attrs !== 'warm,classic,lg,pills' || ownerSees || errors.length) fail(`theme: ${attrs} ownerSees=${ownerSees} ${errors}`);
   else console.log('ok club theme');
   await ctx.close();
 }
