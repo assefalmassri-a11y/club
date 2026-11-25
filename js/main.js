@@ -68,7 +68,7 @@ async function loadContext() {
   const ids = [...new Set(state.staffRows.map((r) => r.club_id))];
   state.clubs = {};
   if (ids.length) {
-    const { data: clubs, error: e2 } = await sb.from('clubs').select('id, name, slug, default_currency, timezone, brand_color, logo_path').in('id', ids);
+    const { data: clubs, error: e2 } = await sb.from('clubs').select('id, name, slug, default_currency, timezone, brand_color, logo_path, theme').in('id', ids);
     if (e2) throw e2;
     for (const c of clubs || []) state.clubs[c.id] = c;
   }

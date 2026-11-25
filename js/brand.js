@@ -14,7 +14,19 @@ function luminance(hex) {
 // WCAG contrast of white text on this colour (buttons use a darker shade of it).
 export const contrastWithWhite = (hex) => 1.05 / (luminance(hex) + 0.05);
 
+const THEME_ATTRS = { bg: 'data-bg', font: 'data-font', fsize: 'data-fsize', tabs: 'data-tabs' };
+const THEME_DEFAULTS = { bg: 'default', font: 'default', fsize: 'md', tabs: '' };
+// Club theme (background tone, font, size, tab style): an attribute per choice; defaults leave the stock look untouched.
+export function applyTheme(club) {
+  const th = (club && club.theme) || {};
+  for (const [k, attr] of Object.entries(THEME_ATTRS)) {
+    const v = th[k];
+    if (v && v !== THEME_DEFAULTS[k] && /^[a-z]+$/.test(v)) root.setAttribute(attr, v); else root.removeAttribute(attr);
+  }
+}
+
 export function applyBrand(club) {
+  applyTheme(club);
   const c = club && club.brand_color;
   if (!c || !/^#[0-9a-f]{6}$/i.test(c)) { for (const v of VARS) root.style.removeProperty(v); root.removeAttribute('data-brand'); return; }
   root.setAttribute('data-brand', '1');
@@ -30,7 +42,7 @@ export async function brandingOptions() {
   if (optionsCache) return optionsCache;
   const { data, error } = await sb.rpc('branding_options');
   if (error) throw error;
-  optionsCache = data || { palette: [], allow_custom: false, allow_logo: false };
+  optionsCache = data || { palette: [], allow_custom: false, allow_logo: false, allow_theme: false };
   return optionsCache;
 }
 export function resetBrandingOptions() { optionsCache = null; }

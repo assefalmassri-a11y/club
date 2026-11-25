@@ -87,3 +87,7 @@ Analytics (staff), coupons, installments, shop/POS, equipment register, personal
 - Design overhaul: accent colors per section, grouped sidebar, desktop layout (wide grids), mobile bottom bar + bottom-sheet modals, light/dark/auto theme (`js/theme.js`).
 - Per-trainer report for the owner (staff → "Report"): classes, attendance, fill rate, rating, PT sessions, clients, salary; CSV export.
 - Equipment photo (private bucket `equipment-photos`, path `<club>/<id>.jpg`).
+
+## Phase 27
+- Club look and feel (Settings → owner): background tone (7 presets), font (system stacks only), text size, tab style. Live preview, stored on Save (`set_club_theme`, column `clubs.theme`, guarded like the other brand columns).
+- The platform owner can allow or block it (`allow_theme` in `platform_set_branding`). CSS layer at the end of `css/app.css` driven by `data-bg/data-font/data-fsize/data-tabs` set in `js/brand.js`.

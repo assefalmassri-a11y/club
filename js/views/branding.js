@@ -3,8 +3,16 @@ import { sb } from '../supa.js';
 import { state } from '../state.js';
 import { h, button, toast, guard } from '../dom.js';
 import { t } from '../i18n.js';
-import { applyBrand, brandingOptions, contrastWithWhite, logoImg } from '../brand.js';
+import { applyBrand, applyTheme, brandingOptions, contrastWithWhite, logoImg } from '../brand.js';
 import { uploadClubLogo, removeClubLogo } from '../photo.js';
+
+const THEME_CHOICES = {
+  bg: ['default', 'plain', 'warm', 'mint', 'sky', 'rose', 'slate'],
+  font: ['default', 'classic', 'clear', 'rounded'],
+  fsize: ['sm', 'md', 'lg'],
+  tabs: ['colorful', 'brand', 'pills', 'minimal'],
+};
+const THEME_FALLBACK = { bg: 'default', font: 'default', fsize: 'md', tabs: 'colorful' };
 
 export async function brandingSection() {
   const opt = await brandingOptions();
@@ -52,12 +60,34 @@ export async function brandingSection() {
     }
     if (cur) row.append(button(t('brand.reset'), () => guard(() => setColor(null)), 'btn small ghost'));
     box.append(row);
+    if (opt.allow_theme) box.append(themeBox());
     if (opt.allow_logo) {
       box.append(h('h3', { class: 'section' }, t('brand.logo')), logoImg(state.club) || h('p', { class: 'muted' }, t('brand.noLogo')),
         h('div', { class: 'row gap wrap' },
           button(t('brand.upload'), () => guard(async () => { const f = await pickImage(); if (f) await setLogo(() => uploadClubLogo(state.club.id, f)); }), 'btn small'),
           state.club.logo_path ? button(t('brand.removeLogo'), () => guard(() => setLogo(() => removeClubLogo(state.club.id))), 'btn small ghost') : null));
     }
+  }
+  // Look and feel: live preview on the page, stored only on Save (set_club_theme).
+  function themeBox() {
+    const saved = { ...THEME_FALLBACK, ...(state.club.theme || {}) };
+    const cur = { ...saved };
+    const wrap = h('div', null, h('h3', { class: 'section' }, t('brand.theme')), h('p', { class: 'muted small' }, t('brand.themeHelp')));
+    const preview = () => applyTheme({ theme: cur });
+    for (const key of Object.keys(THEME_CHOICES)) {
+      const sel = h('select', { 'aria-label': t(`brand.${key}`) }, THEME_CHOICES[key].map((v) => h('option', { value: v, selected: v === cur[key] }, t(`theme.${key}.${v}`))));
+      sel.addEventListener('change', () => { cur[key] = sel.value; preview(); });
+      wrap.append(h('label', { class: 'row gap' }, h('span', { class: 'muted' }, t(`brand.${key}`)), sel));
+    }
+    wrap.append(h('div', { class: 'row gap wrap' },
+      button(t('brand.save'), () => guard(async () => {
+        const { error } = await sb.rpc('set_club_theme', { p_club: state.club.id, p_bg: cur.bg, p_font: cur.font, p_fsize: cur.fsize, p_tabs: cur.tabs });
+        if (error) throw error;
+        state.club.theme = { ...cur }; applyBrand(state.club);
+        toast(t('brand.saved'), 'ok');
+      }), 'btn small primary'),
+      button(t('brand.undo'), () => { applyBrand(state.club); draw(); }, 'btn small ghost')));
+    return wrap;
   }
   draw();
   return box;
