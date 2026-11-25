@@ -1,5 +1,4 @@
 import { calendarTerm } from '../billing.js';
-import { code39 } from '../barcode.js';
 import { sb } from '../supa.js';
 import { state, scoped, canManage } from '../state.js';
 import { h, clear, badge, button, openForm, toast, guard, fmtDate, fmtMoney, toMinor, today, addDays, decimals, confirmBox } from '../dom.js';
@@ -236,8 +235,7 @@ function printCard(member) {
   const card = h('div', { class: 'id-card' },
     h('div', { class: 'id-club' }, state.club.name),
     h('div', { class: 'id-name' }, member.full_name),
-    h('div', { class: 'id-no ltr' }, `#${member.member_no}`),
-    code39(member.member_no));
+    h('div', { class: 'id-no ltr' }, `#${member.member_no}`));
   overlay.append(h('div', { class: 'modal small' }, card,
     h('div', { class: 'row end' }, button(t('common.close'), () => overlay.remove()), button(t('mem.print'), () => window.print(), 'btn primary'))));
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });

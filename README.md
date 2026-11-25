@@ -33,7 +33,7 @@
 ## Member ID, PIN door entry, card printing, activity
 - Every member has a per-club number (#1001…), assigned by the database, immutable. Staff list shows/searches it.
 - Door by keypad: member number + 6-digit PIN (the member sets the PIN in the app: Home → Door PIN). 5 wrong tries lock that PIN for 15 minutes; a door allows max 20 failed PIN tries/minute. Door device: `POST http://127.0.0.1:8099/pin` with `{"member_no":1001,"pin":"123456"}` (local only; connect your keypad to this). Gateway route `/door-gateway/pin`.
-- Membership card: Members → More → "Membership card (print)": name, number and a Code 39 barcode of the number (readable by any barcode scanner). A QR version needs a QR library (not bundled).
+- Membership card: Members → More → "Membership card (print)": name and member number only (no barcode). Door/entry cards are RFID/Mifare/NFC: issue them from Members → Card with the card UID.
 - Member app has an "Activity" tab (visits + door attempts).
 
 ## Reception, audit, exports
